@@ -1,26 +1,28 @@
 import 'package:get/get.dart';
+// Sesuaikan import rute dengan struktur Anda
+import '../../../routes/app_pages.dart';
 
 class LoginController extends GetxController {
-  var email = ''.obs;
-  var password = ''.obs;
+  // Obscure password toggle
+  var isPasswordHidden = true.obs;
+
+  void togglePasswordView() {
+    isPasswordHidden.value = !isPasswordHidden.value;
+  }
 
   void login() {
-    if (email.value.isEmpty || password.value.isEmpty) {
-      Get.snackbar("Error", "Email dan Password wajib diisi");
-      return;
-    }
+    // Nanti di sini logika autentikasi
+    // Setelah sukses, langsung arahkan ke Dashboard dan hapus history
+    Get.offAllNamed(Routes.DASHBOARD);
+    print("Login diproses, menuju Dashboard...");
+  }
 
-    if (!GetUtils.isEmail(email.value)) {
-      Get.snackbar("Error", "Format email tidak valid");
-      return;
-    }
+  void loginWithGoogle() {
+    print("Login dengan Google...");
+  }
 
-    if (password.value.length < 6) {
-      Get.snackbar("Error", "Password minimal 6 karakter");
-      return;
-    }
-
-    // 🔥 PINDAH KE DASHBOARD
-    Get.offAllNamed('/dashboard');
+  void goToRegister() {
+    Get.toNamed(Routes.REGISTER);
+    print("Menuju halaman Register...");
   }
 }

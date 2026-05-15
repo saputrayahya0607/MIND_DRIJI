@@ -2,161 +2,182 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/register_controller.dart';
 
-final nameC = TextEditingController();
-final emailC = TextEditingController();
-final passC = TextEditingController();
-final confirmPassC = TextEditingController();
+const Color bgDark = Color(0xFF0A0E21);
+const Color cardDark = Color(0xFF1D1E33);
+const Color accentCyan = Color(0xFF1DE9B6);
 
 class RegisterView extends GetView<RegisterController> {
-  const RegisterView({super.key});
+  const RegisterView({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A1A2F),
+      backgroundColor: bgDark,
       body: Center(
         child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
           child: Container(
-            padding: const EdgeInsets.all(24),
-            margin: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.all(32.0),
             decoration: BoxDecoration(
-              color: const Color(0xFF0F2747),
+              color: cardDark,
               borderRadius: BorderRadius.circular(30),
+              boxShadow: [
+                BoxShadow(
+                  color: accentCyan.withOpacity(0.1),
+                  blurRadius: 20,
+                  spreadRadius: 2,
+                ),
+              ],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // 🔵 ICON
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white12,
-                  ),
-                  child: const Icon(
-                    Icons.person_add,
-                    color: Colors.white,
-                    size: 30,
-                  ),
+                const Icon(
+                  Icons.person_add_outlined,
+                  size: 60,
+                  color: accentCyan,
                 ),
-
                 const SizedBox(height: 16),
-
-                // 🔵 TITLE
                 const Text(
-                  "Buat Akun",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-
-                const SizedBox(height: 6),
-
-                const Text(
-                  "Mulai hidup digital yang lebih sehat",
+                  'Buat Akun Baru',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white70, fontSize: 13),
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
+                const SizedBox(height: 32),
 
-                const SizedBox(height: 25),
-
-                // 🔵 NAMA
-                _buildInput(
-                  hint: "Nama Lengkap",
-                  icon: Icons.person,
-                  controller: nameC,
+                // Form Nama Lengkap
+                TextField(
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    labelText: 'Nama Lengkap',
+                    labelStyle: const TextStyle(color: Colors.grey),
+                    prefixIcon: const Icon(Icons.person_outline, color: Colors.grey),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: const BorderSide(color: Colors.grey),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: const BorderSide(color: accentCyan),
+                    ),
+                  ),
                 ),
-
                 const SizedBox(height: 16),
 
-                // 🔵 EMAIL
-                _buildInput(
-                  hint: "Email",
-                  icon: Icons.email,
-                  controller: emailC,
+                // Form Email
+                TextField(
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    labelText: 'Email',
+                    labelStyle: const TextStyle(color: Colors.grey),
+                    prefixIcon: const Icon(Icons.email_outlined, color: Colors.grey),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: const BorderSide(color: Colors.grey),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: const BorderSide(color: accentCyan),
+                    ),
+                  ),
                 ),
-
                 const SizedBox(height: 16),
 
-                // 🔵 PASSWORD
-                _buildInput(
-                  hint: "Password",
-                  icon: Icons.lock,
-                  isPassword: true,
-                  controller: passC,
-                ),
-
+                // Form Password
+                Obx(() => TextField(
+                  obscureText: controller.isPasswordHidden.value,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    labelText: 'Password',
+                    labelStyle: const TextStyle(color: Colors.grey),
+                    prefixIcon: const Icon(Icons.lock_outline, color: Colors.grey),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        controller.isPasswordHidden.value 
+                            ? Icons.visibility_off 
+                            : Icons.visibility,
+                        color: Colors.grey,
+                      ),
+                      onPressed: controller.togglePasswordView,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: const BorderSide(color: Colors.grey),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: const BorderSide(color: accentCyan),
+                    ),
+                  ),
+                )),
                 const SizedBox(height: 16),
 
-                // 🔵 KONFIRMASI PASSWORD
-                _buildInput(
-                  hint: "Konfirmasi Password",
-                  icon: Icons.lock,
-                  isPassword: true,
-                  controller: confirmPassC,
-                ),
+                // Form Konfirmasi Password
+                Obx(() => TextField(
+                  obscureText: controller.isConfirmPasswordHidden.value,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    labelText: 'Konfirmasi Password',
+                    labelStyle: const TextStyle(color: Colors.grey),
+                    prefixIcon: const Icon(Icons.lock_reset_outlined, color: Colors.grey),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        controller.isConfirmPasswordHidden.value 
+                            ? Icons.visibility_off 
+                            : Icons.visibility,
+                        color: Colors.grey,
+                      ),
+                      onPressed: controller.toggleConfirmPasswordView,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: const BorderSide(color: Colors.grey),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: const BorderSide(color: accentCyan),
+                    ),
+                  ),
+                )),
+                const SizedBox(height: 32),
 
-                const SizedBox(height: 20),
-
-                // 🔵 BUTTON REGISTER
-                Container(
+                // Tombol Daftar
+                SizedBox(
                   width: double.infinity,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(30),
-                    gradient: const LinearGradient(
-                      colors: [
-                        Color(0xFF7EE8FA),
-                        Color(0xFF80FFDB),
-                      ],
-                    ),
-                  ),
+                  height: 50,
                   child: ElevatedButton(
-                    onPressed: () {
-                        controller.name.value = nameC.text;
-                        controller.email.value = emailC.text;
-                        controller.password.value = passC.text;
-                        controller.confirmPassword.value = confirmPassC.text;
-
-                        controller.register();
-                    },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.transparent,
-                      shadowColor: Colors.transparent,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      backgroundColor: accentCyan,
+                      foregroundColor: bgDark,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
+                        borderRadius: BorderRadius.circular(15),
                       ),
+                      elevation: 5,
                     ),
+                    onPressed: controller.register,
                     child: const Text(
-                      "Daftar →",
-                      style: TextStyle(
-                        color: Colors.black87,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      'Daftar Sekarang',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
+                const SizedBox(height: 24),
 
-                const SizedBox(height: 20),
-
-                // 🔵 LOGIN LINK
+                // Link Masuk
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
-                      "Sudah punya akun? ",
-                      style: TextStyle(color: Colors.white70),
-                    ),
+                    const Text('Sudah punya akun? ', style: TextStyle(color: Colors.grey)),
                     GestureDetector(
-                      onTap: () {
-                        Get.back();
-                      },
+                      onTap: controller.goToLogin,
                       child: const Text(
-                        "Masuk",
+                        'Masuk',
                         style: TextStyle(
-                          color: Color(0xFF80FFDB),
+                          color: accentCyan,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -166,31 +187,6 @@ class RegisterView extends GetView<RegisterController> {
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  // 🔧 WIDGET INPUT
-  Widget _buildInput({
-    required String hint,
-    required IconData icon,
-    required TextEditingController controller,
-    bool isPassword = false,
-  }) {
-    return TextField(
-      controller: controller,
-      obscureText: isPassword,
-      style: const TextStyle(color: Colors.white),
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: const TextStyle(color: Colors.white38),
-        prefixIcon: Icon(icon, color: Colors.white70),
-        filled: true,
-        fillColor: Colors.white10,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
-          borderSide: BorderSide.none,
         ),
       ),
     );

@@ -1,184 +1,171 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/login_controller.dart';
+// import '../../../core/theme/app_colors.dart'; // Aktifkan jika pakai app_colors.dart
 
-final emailC = TextEditingController();
-final passC = TextEditingController();
+// Fallback warna jika tidak pakai app_colors.dart
+const Color bgDark = Color(0xFF0A0E21);
+const Color cardDark = Color(0xFF1D1E33);
+const Color accentCyan = Color(0xFF1DE9B6);
 
 class LoginView extends GetView<LoginController> {
-  const LoginView({super.key});
+  const LoginView({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A1A2F),
+      backgroundColor: bgDark,
       body: Center(
         child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
           child: Container(
-            padding: const EdgeInsets.all(24),
-            margin: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.all(32.0),
             decoration: BoxDecoration(
-              color: const Color(0xFF0F2747),
+              color: cardDark,
               borderRadius: BorderRadius.circular(30),
+              boxShadow: [
+                BoxShadow(
+                  color: accentCyan.withOpacity(0.1),
+                  blurRadius: 20,
+                  spreadRadius: 2,
+                ),
+              ],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // 🔵 ICON
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white12,
-                  ),
-                  child: const Icon(
-                    Icons.shield,
-                    color: Colors.white,
-                    size: 30,
-                  ),
+                // Logo & Header
+                const Icon(
+                  Icons.shield_outlined,
+                  size: 60,
+                  color: accentCyan,
                 ),
-
                 const SizedBox(height: 16),
-
-                // 🔵 TITLE
                 const Text(
-                  "MindGuard",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-
-                const SizedBox(height: 6),
-
-                const Text(
-                  "Kelola kebiasaan digitalmu dengan lebih sadar",
+                  'Selamat Datang di\nMIND DRIJI',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white70, fontSize: 13),
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
+                const SizedBox(height: 32),
 
-                const SizedBox(height: 25),
-
-                // 🔵 EMAIL
-                _buildInput(
-                  hint: "Email",
-                  icon: Icons.email,
-                  controller: emailC,
+                // Form Email
+                TextField(
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    labelText: 'Email',
+                    labelStyle: const TextStyle(color: Colors.grey),
+                    prefixIcon: const Icon(Icons.email_outlined, color: Colors.grey),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: const BorderSide(color: Colors.grey),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: const BorderSide(color: accentCyan),
+                    ),
+                  ),
                 ),
-
                 const SizedBox(height: 16),
 
-                // 🔵 PASSWORD
-                _buildInput(
-                  hint: "Password",
-                  icon: Icons.lock,
-                  isPassword: true,
-                  controller: passC,
-                ),
-
-                const SizedBox(height: 10),
-
-                // 🔵 FORGOT PASSWORD
+                // Form Password
+                Obx(() => TextField(
+                  obscureText: controller.isPasswordHidden.value,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    labelText: 'Password',
+                    labelStyle: const TextStyle(color: Colors.grey),
+                    prefixIcon: const Icon(Icons.lock_outline, color: Colors.grey),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        controller.isPasswordHidden.value 
+                            ? Icons.visibility_off 
+                            : Icons.visibility,
+                        color: Colors.grey,
+                      ),
+                      onPressed: controller.togglePasswordView,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: const BorderSide(color: Colors.grey),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: const BorderSide(color: accentCyan),
+                    ),
+                  ),
+                )),
+                
+                // Lupa Password
                 Align(
                   alignment: Alignment.centerRight,
-                  child: Text(
-                    "Lupa Password?",
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                // 🔵 BUTTON LOGIN
-                Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(30),
-                    gradient: const LinearGradient(
-                      colors: [
-                        Color(0xFF7EE8FA),
-                        Color(0xFF80FFDB),
-                      ],
-                    ),
-                  ),
-                  child: ElevatedButton(
-                    onPressed: () {
-                      controller.email.value = emailC.text;
-                      controller.password.value = passC.text;
-
-                      controller.login();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.transparent,
-                      shadowColor: Colors.transparent,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                    ),
+                  child: TextButton(
+                    onPressed: () {},
                     child: const Text(
-                      "Masuk →",
-                      style: TextStyle(
-                        color: Colors.black87,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      'Lupa Password?',
+                      style: TextStyle(color: Colors.grey),
                     ),
                   ),
                 ),
+                const SizedBox(height: 16),
 
-                const SizedBox(height: 20),
-
-                const Text(
-                  "atau",
-                  style: TextStyle(color: Colors.white54),
-                ),
-
-                const SizedBox(height: 15),
-
-                // 🔵 GOOGLE BUTTON
-                Container(
+                // Tombol Masuk
+                SizedBox(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.white10,
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.g_mobiledata,
-                          color: Colors.white, size: 26),
-                      SizedBox(width: 8),
-                      Text(
-                        "Masuk dengan Google",
-                        style: TextStyle(color: Colors.white),
+                  height: 50,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: accentCyan,
+                      foregroundColor: bgDark,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
                       ),
-                    ],
+                      elevation: 5,
+                    ),
+                    onPressed: controller.login,
+                    child: const Text(
+                      'Masuk',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
+                const SizedBox(height: 16),
 
-                const SizedBox(height: 20),
+                // Tombol Google
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Colors.grey),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                    ),
+                    onPressed: controller.loginWithGoogle,
+                    icon: const Icon(Icons.g_mobiledata, size: 30, color: Colors.white),
+                    label: const Text(
+                      'Lanjutkan dengan Google',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
 
-                // 🔵 REGISTER LINK
+                // Link Daftar
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
-                      "Belum punya akun? ",
-                      style: TextStyle(color: Colors.white70),
-                    ),
+                    const Text('Belum punya akun? ', style: TextStyle(color: Colors.grey)),
                     GestureDetector(
-                      onTap: () {
-                        Get.toNamed('/register');
-                      },
+                      onTap: controller.goToRegister,
                       child: const Text(
-                        "Daftar sekarang",
+                        'Daftar',
                         style: TextStyle(
-                          color: Color(0xFF80FFDB),
+                          color: accentCyan,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -188,31 +175,6 @@ class LoginView extends GetView<LoginController> {
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  // 🔧 WIDGET INPUT
-  Widget _buildInput({
-    required String hint,
-    required IconData icon,
-    required TextEditingController controller,
-    bool isPassword = false,
-  }) {
-    return TextField(
-      controller: controller,
-      obscureText: isPassword,
-      style: const TextStyle(color: Colors.white),
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: const TextStyle(color: Colors.white38),
-        prefixIcon: Icon(icon, color: Colors.white70),
-        filled: true,
-        fillColor: Colors.white10,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
-          borderSide: BorderSide.none,
         ),
       ),
     );
