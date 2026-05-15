@@ -3,10 +3,12 @@ import 'package:get/get.dart';
 import '../controllers/login_controller.dart';
 // import '../../../core/theme/app_colors.dart'; // Aktifkan jika pakai app_colors.dart
 
-// Fallback warna jika tidak pakai app_colors.dart
-const Color bgDark = Color(0xFF0A0E21);
-const Color cardDark = Color(0xFF1D1E33);
-const Color accentCyan = Color(0xFF1DE9B6);
+// PALET WARNA LIGHT MODE
+const Color bgLight = Color(0xFFF5F7FA); 
+const Color cardLight = Color(0xFFFFFFFF); 
+const Color textDark = Color(0xFF2D3142); 
+const Color textGrey = Color(0xFF9094A6); 
+const Color accentCyan = Color(0xFF00BFA5); 
 
 class LoginView extends GetView<LoginController> {
   const LoginView({Key? key}) : super(key: key);
@@ -14,18 +16,18 @@ class LoginView extends GetView<LoginController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: bgDark,
+      backgroundColor: bgLight, // Diubah ke warna latar terang
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: Container(
             padding: const EdgeInsets.all(32.0),
             decoration: BoxDecoration(
-              color: cardDark,
+              color: cardLight, // Diubah ke warna card putih
               borderRadius: BorderRadius.circular(30),
               boxShadow: [
                 BoxShadow(
-                  color: accentCyan.withOpacity(0.1),
+                  color: Colors.black.withOpacity(0.05), // Bayangan hitam halus untuk tema terang
                   blurRadius: 20,
                   spreadRadius: 2,
                 ),
@@ -47,21 +49,21 @@ class LoginView extends GetView<LoginController> {
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: textDark, // Teks diubah ke gelap
                   ),
                 ),
                 const SizedBox(height: 32),
 
                 // Form Email
                 TextField(
-                  style: const TextStyle(color: Colors.white),
+                  style: const TextStyle(color: textDark), // Teks inputan diubah ke gelap
                   decoration: InputDecoration(
                     labelText: 'Email',
-                    labelStyle: const TextStyle(color: Colors.grey),
-                    prefixIcon: const Icon(Icons.email_outlined, color: Colors.grey),
+                    labelStyle: const TextStyle(color: textGrey),
+                    prefixIcon: const Icon(Icons.email_outlined, color: textGrey),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
-                      borderSide: const BorderSide(color: Colors.grey),
+                      borderSide: BorderSide(color: textGrey.withOpacity(0.5)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
@@ -74,23 +76,23 @@ class LoginView extends GetView<LoginController> {
                 // Form Password
                 Obx(() => TextField(
                   obscureText: controller.isPasswordHidden.value,
-                  style: const TextStyle(color: Colors.white),
+                  style: const TextStyle(color: textDark), // Teks inputan diubah ke gelap
                   decoration: InputDecoration(
                     labelText: 'Password',
-                    labelStyle: const TextStyle(color: Colors.grey),
-                    prefixIcon: const Icon(Icons.lock_outline, color: Colors.grey),
+                    labelStyle: const TextStyle(color: textGrey),
+                    prefixIcon: const Icon(Icons.lock_outline, color: textGrey),
                     suffixIcon: IconButton(
                       icon: Icon(
                         controller.isPasswordHidden.value 
                             ? Icons.visibility_off 
                             : Icons.visibility,
-                        color: Colors.grey,
+                        color: textGrey,
                       ),
                       onPressed: controller.togglePasswordView,
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
-                      borderSide: const BorderSide(color: Colors.grey),
+                      borderSide: BorderSide(color: textGrey.withOpacity(0.5)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
@@ -106,7 +108,7 @@ class LoginView extends GetView<LoginController> {
                     onPressed: () {},
                     child: const Text(
                       'Lupa Password?',
-                      style: TextStyle(color: Colors.grey),
+                      style: TextStyle(color: textGrey),
                     ),
                   ),
                 ),
@@ -119,11 +121,12 @@ class LoginView extends GetView<LoginController> {
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: accentCyan,
-                      foregroundColor: bgDark,
+                      foregroundColor: Colors.white, // Teks tombol login jadi putih
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15),
                       ),
                       elevation: 5,
+                      shadowColor: accentCyan.withOpacity(0.3), // Glow tipis warna cyan
                     ),
                     onPressed: controller.login,
                     child: const Text(
@@ -140,16 +143,16 @@ class LoginView extends GetView<LoginController> {
                   height: 50,
                   child: OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Colors.grey),
+                      side: BorderSide(color: textGrey.withOpacity(0.5)),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15),
                       ),
                     ),
                     onPressed: controller.loginWithGoogle,
-                    icon: const Icon(Icons.g_mobiledata, size: 30, color: Colors.white),
+                    icon: const Icon(Icons.g_mobiledata, size: 30, color: textDark), // Ikon google diubah ke gelap
                     label: const Text(
                       'Lanjutkan dengan Google',
-                      style: TextStyle(color: Colors.white),
+                      style: TextStyle(color: textDark), // Teks google diubah ke gelap
                     ),
                   ),
                 ),
@@ -159,7 +162,7 @@ class LoginView extends GetView<LoginController> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text('Belum punya akun? ', style: TextStyle(color: Colors.grey)),
+                    const Text('Belum punya akun? ', style: TextStyle(color: textGrey)),
                     GestureDetector(
                       onTap: controller.goToRegister,
                       child: const Text(

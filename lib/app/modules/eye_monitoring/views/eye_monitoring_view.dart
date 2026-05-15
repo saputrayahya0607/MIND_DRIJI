@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/eye_monitoring_controller.dart';
 
-const Color bgDark = Color(0xFF0A0E21);
-const Color cardDark = Color(0xFF1D1E33);
-const Color accentCyan = Color(0xFF1DE9B6);
-const Color warningYellow = Color(0xFFFFD600);
+// PALET WARNA LIGHT MODE
+const Color bgLight = Color(0xFFF5F7FA); 
+const Color cardLight = Color(0xFFFFFFFF); 
+const Color textDark = Color(0xFF2D3142); 
+const Color textGrey = Color(0xFF9094A6); 
+const Color accentCyan = Color(0xFF00BFA5); 
 const Color dangerRed = Color(0xFFFF5252);
+const Color cameraBg = Color(0xFF1E212A); // Warna gelap khusus untuk area feed kamera
 
 class EyeMonitoringView extends GetView<EyeMonitoringController> {
   const EyeMonitoringView({Key? key}) : super(key: key);
@@ -14,15 +17,15 @@ class EyeMonitoringView extends GetView<EyeMonitoringController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: bgDark,
+      backgroundColor: bgLight,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_ios_new, color: textDark),
           onPressed: () => Get.back(),
         ),
-        title: const Text('AI Eye Monitoring', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: const Text('AI Eye Monitoring', style: TextStyle(color: textDark, fontWeight: FontWeight.bold)),
         centerTitle: true,
         actions: [
           IconButton(
@@ -38,26 +41,21 @@ class EyeMonitoringView extends GetView<EyeMonitoringController> {
             child: Container(
               margin: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: const Color(0xFF050505), // Warna gelap untuk placeholder kamera
+                color: cameraBg, // Placeholder kamera tetap gelap agar HUD terlihat jelas
                 borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: accentCyan.withOpacity(0.3), width: 2),
                 boxShadow: [
-                  BoxShadow(color: accentCyan.withOpacity(0.1), blurRadius: 30, spreadRadius: 5)
-                ]
+                  BoxShadow(color: accentCyan.withOpacity(0.15), blurRadius: 20, spreadRadius: 2, offset: const Offset(0, 10))
+                ],
+                border: Border.all(color: accentCyan.withOpacity(0.5), width: 4), // Frame lebih tebal
               ),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(30),
+                borderRadius: BorderRadius.circular(26),
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    // Placeholder Kamera
+                    // Placeholder Siluet Wajah
                     const Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.face, color: Color(0xFF1A1A1A), size: 150), // Siluet Wajah
-                        ],
-                      ),
+                      child: Icon(Icons.face, color: Color(0xFF2A2E3B), size: 180), 
                     ),
 
                     // Efek Scanner Bergerak (Animasi HUD)
@@ -67,8 +65,12 @@ class EyeMonitoringView extends GetView<EyeMonitoringController> {
                     Positioned(
                       top: 16,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                        decoration: BoxDecoration(color: dangerRed.withOpacity(0.2), borderRadius: BorderRadius.circular(10), border: Border.all(color: dangerRed)),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: dangerRed.withOpacity(0.2), 
+                          borderRadius: BorderRadius.circular(10), 
+                          border: Border.all(color: dangerRed)
+                        ),
                         child: const Row(
                           children: [
                             Icon(Icons.circle, color: dangerRed, size: 10),
@@ -82,7 +84,7 @@ class EyeMonitoringView extends GetView<EyeMonitoringController> {
                     // Koordinat Mockup
                     Positioned(
                       bottom: 16, left: 16,
-                      child: Text('X: 142 Y: 89 Z: 0.5\nEAR: 0.28 (NORMAL)', style: TextStyle(color: accentCyan.withOpacity(0.7), fontSize: 10, fontFamily: 'monospace')),
+                      child: Text('X: 142 Y: 89 Z: 0.5\nEAR: 0.28 (NORMAL)', style: TextStyle(color: accentCyan.withOpacity(0.9), fontSize: 10, fontFamily: 'monospace', fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),
@@ -90,13 +92,14 @@ class EyeMonitoringView extends GetView<EyeMonitoringController> {
             ),
           ),
 
-          // 2. HASIL ANALISIS REAL-TIME
+          // 2. HASIL ANALISIS REAL-TIME (TEMA TERANG)
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(24),
-            decoration: const BoxDecoration(
-              color: cardDark,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: cardLight,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(40)),
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, -5))]
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min, 
@@ -106,7 +109,7 @@ class EyeMonitoringView extends GetView<EyeMonitoringController> {
                   children: [
                     Icon(Icons.auto_awesome, color: accentCyan),
                     SizedBox(width: 8),
-                    Text('Parameter Biometrik', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                    Text('Parameter Biometrik', style: TextStyle(color: textDark, fontSize: 18, fontWeight: FontWeight.bold)),
                   ],
                 ),
                 const SizedBox(height: 24),
@@ -119,26 +122,34 @@ class EyeMonitoringView extends GetView<EyeMonitoringController> {
                     _buildMetricData('Fatigue', '12%', 'Aman', accentCyan),
                   ],
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 32),
 
                 Container(
                   padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(color: bgDark, borderRadius: BorderRadius.circular(15)),
+                  decoration: BoxDecoration(
+                    color: bgLight, 
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: accentCyan.withOpacity(0.2))
+                  ),
                   child: Row(
                     children: [
-                      const Icon(Icons.check_circle_outline, color: accentCyan, size: 30),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(color: accentCyan.withOpacity(0.1), shape: BoxShape.circle),
+                        child: const Icon(Icons.check_circle_outline, color: accentCyan, size: 28)
+                      ),
                       const SizedBox(width: 16),
                       const Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Kondisi Optimal', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                            Text('Tidak terdeteksi tanda-tanda kelelahan mata.', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                            Text('Kondisi Optimal', style: TextStyle(color: textDark, fontWeight: FontWeight.bold)),
+                            Text('Tidak terdeteksi kelelahan mata.', style: TextStyle(color: textGrey, fontSize: 12)),
                           ],
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.stop_circle, color: dangerRed, size: 35),
+                        icon: const Icon(Icons.stop_circle, color: dangerRed, size: 40),
                         onPressed: () => Get.back(),
                       )
                     ],
@@ -156,18 +167,18 @@ class EyeMonitoringView extends GetView<EyeMonitoringController> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+        Text(title, style: const TextStyle(color: textGrey, fontSize: 12, fontWeight: FontWeight.w600)),
         const SizedBox(height: 4),
-        Text(value, style: TextStyle(color: color, fontSize: 24, fontWeight: FontWeight.bold)),
+        Text(value, style: const TextStyle(color: textDark, fontSize: 24, fontWeight: FontWeight.bold)),
         const SizedBox(height: 4),
-        Text(status, style: TextStyle(color: color.withOpacity(0.7), fontSize: 12)),
+        Text(status, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold)),
       ],
     );
   }
 }
 
 // ==========================================
-// WIDGET ANIMASI SCANNER HUD
+// WIDGET ANIMASI SCANNER HUD (TETAP SAMA KARENA DI DALAM KAMERA GELAP)
 // ==========================================
 class _FaceScannerHUD extends StatefulWidget {
   const _FaceScannerHUD({Key? key}) : super(key: key);
@@ -182,7 +193,6 @@ class _FaceScannerHUDState extends State<_FaceScannerHUD> with SingleTickerProvi
   @override
   void initState() {
     super.initState();
-    // Mengatur animasi bergerak naik turun selama 2 detik
     _animationController = AnimationController(vsync: this, duration: const Duration(seconds: 2))..repeat(reverse: true);
   }
 
@@ -198,17 +208,15 @@ class _FaceScannerHUDState extends State<_FaceScannerHUD> with SingleTickerProvi
       builder: (context, constraints) {
         return Stack(
           children: [
-            // Bingkai Target Wajah (Kotak di tengah)
             Center(
               child: Container(
                 width: 200, height: 250,
                 decoration: BoxDecoration(
-                  border: Border.all(color: accentCyan.withOpacity(0.2), width: 2),
+                  border: Border.all(color: accentCyan.withOpacity(0.3), width: 2),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Stack(
                   children: [
-                    // Sudut-sudut bingkai (Corner Brackets)
                     _buildCorner(Alignment.topLeft),
                     _buildCorner(Alignment.topRight),
                     _buildCorner(Alignment.bottomLeft),
@@ -218,20 +226,18 @@ class _FaceScannerHUDState extends State<_FaceScannerHUD> with SingleTickerProvi
               ),
             ),
             
-            // Garis Laser Animasi
             AnimatedBuilder(
               animation: _animationController,
               builder: (context, child) {
                 return Positioned(
-                  // Bergerak dari atas (0) ke bawah (maksimal tinggi bingkai dikurangi tebal garis)
                   top: (constraints.maxHeight / 2 - 125) + (_animationController.value * 250),
                   left: constraints.maxWidth / 2 - 100,
                   right: constraints.maxWidth / 2 - 100,
                   child: Container(
-                    height: 2,
+                    height: 3,
                     decoration: BoxDecoration(
                       color: accentCyan,
-                      boxShadow: [BoxShadow(color: accentCyan, blurRadius: 10, spreadRadius: 2)],
+                      boxShadow: [BoxShadow(color: accentCyan, blurRadius: 12, spreadRadius: 3)],
                     ),
                   ),
                 );
@@ -243,7 +249,6 @@ class _FaceScannerHUDState extends State<_FaceScannerHUD> with SingleTickerProvi
     );
   }
 
-  // Helper untuk membuat siku-siku bingkai
   Widget _buildCorner(Alignment alignment) {
     double top = (alignment == Alignment.topLeft || alignment == Alignment.topRight) ? 0 : -1;
     double bottom = (alignment == Alignment.bottomLeft || alignment == Alignment.bottomRight) ? 0 : -1;
@@ -254,13 +259,13 @@ class _FaceScannerHUDState extends State<_FaceScannerHUD> with SingleTickerProvi
       top: top >= 0 ? top : null, bottom: bottom >= 0 ? bottom : null,
       left: left >= 0 ? left : null, right: right >= 0 ? right : null,
       child: Container(
-        width: 20, height: 20,
+        width: 24, height: 24,
         decoration: BoxDecoration(
           border: Border(
-            top: top >= 0 ? const BorderSide(color: accentCyan, width: 3) : BorderSide.none,
-            bottom: bottom >= 0 ? const BorderSide(color: accentCyan, width: 3) : BorderSide.none,
-            left: left >= 0 ? const BorderSide(color: accentCyan, width: 3) : BorderSide.none,
-            right: right >= 0 ? const BorderSide(color: accentCyan, width: 3) : BorderSide.none,
+            top: top >= 0 ? const BorderSide(color: accentCyan, width: 4) : BorderSide.none,
+            bottom: bottom >= 0 ? const BorderSide(color: accentCyan, width: 4) : BorderSide.none,
+            left: left >= 0 ? const BorderSide(color: accentCyan, width: 4) : BorderSide.none,
+            right: right >= 0 ? const BorderSide(color: accentCyan, width: 4) : BorderSide.none,
           ),
         ),
       ),

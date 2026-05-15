@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/notification_controller.dart';
 
-const Color bgDark = Color(0xFF0A0E21);
-const Color cardDark = Color(0xFF1D1E33);
-const Color accentCyan = Color(0xFF1DE9B6);
-const Color warningYellow = Color(0xFFFFD600);
+// PALET WARNA LIGHT MODE
+const Color bgLight = Color(0xFFF5F7FA);
+const Color cardLight = Color(0xFFFFFFFF);
+const Color textDark = Color(0xFF2D3142);
+const Color textGrey = Color(0xFF9094A6);
+const Color accentCyan = Color(0xFF00BFA5);
+const Color warningYellow = Color(0xFFFFB300);
 const Color dangerRed = Color(0xFFFF5252);
 
 class NotificationView extends GetView<NotificationController> {
@@ -14,23 +17,22 @@ class NotificationView extends GetView<NotificationController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: bgDark,
+      backgroundColor: bgLight,
       appBar: AppBar(
-        backgroundColor: bgDark,
+        backgroundColor: bgLight,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_ios_new, color: textDark),
           onPressed: () => Get.back(),
         ),
-        title: const Text('Notifikasi AI', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: const Text('Notifikasi AI', style: TextStyle(color: textDark, fontWeight: FontWeight.bold)),
         centerTitle: true,
         actions: [
           IconButton(
             icon: const Icon(Icons.done_all, color: accentCyan),
             onPressed: () {
-              // Aksi tandai semua dibaca
               Get.snackbar('Berhasil', 'Semua notifikasi ditandai sudah dibaca', 
-                backgroundColor: cardDark, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
+                backgroundColor: textDark, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
             },
           )
         ],
@@ -38,10 +40,9 @@ class NotificationView extends GetView<NotificationController> {
       body: ListView(
         padding: const EdgeInsets.all(24.0),
         children: [
-          const Text('Hari Ini', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+          const Text('Hari Ini', style: TextStyle(color: textGrey, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
           
-          // Notifikasi Bahaya (Merah)
           _buildNotifCard(
             icon: Icons.remove_red_eye, 
             iconColor: dangerRed, 
@@ -51,7 +52,6 @@ class NotificationView extends GetView<NotificationController> {
             isUnread: true,
           ),
           
-          // Notifikasi Waspada (Kuning)
           _buildNotifCard(
             icon: Icons.warning_amber_rounded, 
             iconColor: warningYellow, 
@@ -61,7 +61,6 @@ class NotificationView extends GetView<NotificationController> {
             isUnread: true,
           ),
 
-          // Notifikasi Info (Cyan)
           _buildNotifCard(
             icon: Icons.health_and_safety, 
             iconColor: accentCyan, 
@@ -72,7 +71,7 @@ class NotificationView extends GetView<NotificationController> {
           ),
 
           const SizedBox(height: 24),
-          const Text('Kemarin', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+          const Text('Kemarin', style: TextStyle(color: textGrey, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
 
           _buildNotifCard(
@@ -93,8 +92,9 @@ class NotificationView extends GetView<NotificationController> {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: cardDark, 
+        color: cardLight, 
         borderRadius: BorderRadius.circular(15),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
         border: Border.all(color: isUnread ? iconColor.withOpacity(0.5) : Colors.transparent, width: 1)
       ),
       child: Row(
@@ -113,12 +113,12 @@ class NotificationView extends GetView<NotificationController> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Expanded(child: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
-                    Text(time, style: const TextStyle(color: Colors.grey, fontSize: 10)),
+                    Expanded(child: Text(title, style: const TextStyle(color: textDark, fontWeight: FontWeight.bold))),
+                    Text(time, style: const TextStyle(color: textGrey, fontSize: 10)),
                   ],
                 ),
                 const SizedBox(height: 8),
-                Text(desc, style: const TextStyle(color: Colors.grey, fontSize: 12, height: 1.5)),
+                Text(desc, style: const TextStyle(color: textGrey, fontSize: 12, height: 1.5)),
               ],
             ),
           ),
