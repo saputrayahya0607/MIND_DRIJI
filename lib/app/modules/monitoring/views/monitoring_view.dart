@@ -47,7 +47,7 @@ class MonitoringView extends GetView<MonitoringController> {
     );
   }
 
-  // --- GRAFIK SECTION (DIBUAT CENTER) ---
+  // --- GRAFIK SECTION (ANTI OVERFLOW & SCROLLABLE) ---
   Widget _buildChartSection() {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 24),
@@ -70,30 +70,34 @@ class MonitoringView extends GetView<MonitoringController> {
           ),
           const SizedBox(height: 32),
           
-          // ROW GRAFIK DINAMIS & CENTER
-          Obx(() => Row(
-            mainAxisAlignment: MainAxisAlignment.center, // Kunci agar bar di tengah
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: List.generate(controller.chartLabels.length, (index) {
-              bool isToday = index == controller.todayIndex.value;
-              bool isSelected = index == controller.selectedBarIndex.value;
-              
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4), // Jarak antar bar
-                child: GestureDetector(
-                  onTap: () => controller.onBarTap(index),
-                  behavior: HitTestBehavior.opaque,
-                  child: _buildPremiumBar(
-                    controller.chartData[index], 
-                    controller.chartLabels[index], 
-                    120, 
-                    isToday: isToday, 
-                    isSelected: isSelected,
-                    timeLabel: (isSelected || isToday) ? controller.chartTimeLabels[index] : null,
+          // Menggunakan SingleChildScrollView agar aman dari overflow saat bar terlalu banyak
+          Obx(() => SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: List.generate(controller.chartLabels.length, (index) {
+                bool isToday = index == controller.todayIndex.value;
+                bool isSelected = index == controller.selectedBarIndex.value;
+                
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4), // Jarak antar bar
+                  child: GestureDetector(
+                    onTap: () => controller.onBarTap(index),
+                    behavior: HitTestBehavior.opaque,
+                    child: _buildPremiumBar(
+                      controller.chartData[index], 
+                      controller.chartLabels[index], 
+                      120, 
+                      isToday: isToday, 
+                      isSelected: isSelected,
+                      timeLabel: (isSelected || isToday) ? controller.chartTimeLabels[index] : null,
+                    ),
                   ),
-                ),
-              );
-            }),
+                );
+              }),
+            ),
           )),
         ],
       ),
@@ -155,7 +159,10 @@ class MonitoringView extends GetView<MonitoringController> {
                       key: ValueKey(timeLabel + label),
                       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
                       decoration: BoxDecoration(color: (isToday ? warningYellow : accentCyan).withOpacity(0.15), borderRadius: BorderRadius.circular(6)),
-                      child: Text(timeLabel, style: TextStyle(color: isToday ? warningYellow : accentCyan, fontSize: 9, fontWeight: FontWeight.bold)),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown, // Mencegah teks waktu overflow menyamping
+                        child: Text(timeLabel, style: TextStyle(color: isToday ? warningYellow : accentCyan, fontSize: 9, fontWeight: FontWeight.bold)),
+                      ),
                     )
                   : const SizedBox.shrink(),
             ),
@@ -197,7 +204,7 @@ class MonitoringView extends GetView<MonitoringController> {
     );
   }
 
-  // (Widget Total Card & App Usage List tetap sama seperti kode sebelumnya)
+  // --- TOTAL TIME CARD ---
   Widget _buildTotalTimeCard() {
     return Container(
       padding: const EdgeInsets.all(24),
@@ -216,6 +223,7 @@ class MonitoringView extends GetView<MonitoringController> {
     );
   }
 
+  // --- APP USAGE LIST ---
   Widget _buildAppUsageList() {
     return Obx(() => Container(
       padding: const EdgeInsets.all(20),

@@ -15,18 +15,18 @@ class RegisterView extends GetView<RegisterController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: bgLight, // Background diubah ke terang
+      backgroundColor: bgLight,
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: Container(
             padding: const EdgeInsets.all(32.0),
             decoration: BoxDecoration(
-              color: cardLight, // Warna card diubah ke putih
+              color: cardLight,
               borderRadius: BorderRadius.circular(30),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05), // Bayangan hitam lembut
+                  color: Colors.black.withOpacity(0.05),
                   blurRadius: 20,
                   spreadRadius: 2,
                 ),
@@ -34,57 +34,75 @@ class RegisterView extends GetView<RegisterController> {
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start, // Ubah ke kiri agar label rapi
               children: [
-                const Icon(
-                  Icons.person_add_outlined,
-                  size: 60,
-                  color: accentCyan,
+                const Center(
+                  child: Icon(Icons.person_add_outlined, size: 60, color: accentCyan),
                 ),
                 const SizedBox(height: 16),
-                const Text(
-                  'Buat Akun Baru',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: textDark, // Teks diubah ke gelap
+                const Center(
+                  child: Text(
+                    'Buat Akun Baru',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: textDark),
                   ),
                 ),
                 const SizedBox(height: 32),
 
                 // Form Nama Lengkap
-                TextField(
-                  style: const TextStyle(color: textDark), // Teks inputan diubah ke gelap
-                  decoration: InputDecoration(
-                    labelText: 'Nama Lengkap',
-                    labelStyle: const TextStyle(color: textGrey),
-                    prefixIcon: const Icon(Icons.person_outline, color: textGrey),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide(color: textGrey.withOpacity(0.5)),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      borderSide: const BorderSide(color: accentCyan),
-                    ),
-                  ),
-                ),
+                _buildTextField(controller.namaController, 'Nama Lengkap', Icons.person_outline),
                 const SizedBox(height: 16),
 
                 // Form Email
-                TextField(
-                  style: const TextStyle(color: textDark), // Teks inputan diubah ke gelap
-                  decoration: InputDecoration(
-                    labelText: 'Email',
-                    labelStyle: const TextStyle(color: textGrey),
-                    prefixIcon: const Icon(Icons.email_outlined, color: textGrey),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide(color: textGrey.withOpacity(0.5)),
+                _buildTextField(controller.emailController, 'Email', Icons.email_outlined, keyboardType: TextInputType.emailAddress),
+                const SizedBox(height: 16),
+
+                // Form Nomor HP
+                _buildTextField(controller.noHpController, 'Nomor WhatsApp / HP', Icons.phone_android_outlined, keyboardType: TextInputType.phone),
+                const SizedBox(height: 16),
+
+                // Form Jenis Kelamin (Dropdown)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(15),
+                    border: Border.all(color: textGrey.withOpacity(0.5)),
+                  ),
+                  child: Obx(() => DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: controller.jenisKelamin.value,
+                      isExpanded: true,
+                      style: const TextStyle(color: textDark, fontSize: 14),
+                      icon: const Icon(Icons.arrow_drop_down, color: textGrey),
+                      onChanged: (String? newValue) {
+                        if (newValue != null) controller.jenisKelamin.value = newValue;
+                      },
+                      items: <String>['Laki-laki', 'Perempuan'].map<DropdownMenuItem<String>>((String value) {
+                        return DropdownMenuItem<String>(value: value, child: Text(value));
+                      }).toList(),
                     ),
-                    focusedBorder: OutlineInputBorder(
+                  )),
+                ),
+                const SizedBox(height: 16),
+
+                // Form Tanggal Lahir (DatePicker)
+                InkWell(
+                  onTap: () => controller.pilihTanggalLahir(context),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(15),
-                      borderSide: const BorderSide(color: accentCyan),
+                      border: Border.all(color: textGrey.withOpacity(0.5)),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Obx(() => Text(
+                          "${controller.tanggalLahir.value.day}/${controller.tanggalLahir.value.month}/${controller.tanggalLahir.value.year}",
+                          style: const TextStyle(color: textDark, fontSize: 14),
+                        )),
+                        const Icon(Icons.calendar_month_outlined, color: textGrey),
+                      ],
                     ),
                   ),
                 ),
@@ -92,58 +110,38 @@ class RegisterView extends GetView<RegisterController> {
 
                 // Form Password
                 Obx(() => TextField(
+                  controller: controller.passwordController,
                   obscureText: controller.isPasswordHidden.value,
-                  style: const TextStyle(color: textDark), // Teks inputan diubah ke gelap
+                  style: const TextStyle(color: textDark),
                   decoration: InputDecoration(
                     labelText: 'Password',
                     labelStyle: const TextStyle(color: textGrey),
                     prefixIcon: const Icon(Icons.lock_outline, color: textGrey),
                     suffixIcon: IconButton(
-                      icon: Icon(
-                        controller.isPasswordHidden.value 
-                            ? Icons.visibility_off 
-                            : Icons.visibility,
-                        color: textGrey,
-                      ),
+                      icon: Icon(controller.isPasswordHidden.value ? Icons.visibility_off : Icons.visibility, color: textGrey),
                       onPressed: controller.togglePasswordView,
                     ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide(color: textGrey.withOpacity(0.5)),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      borderSide: const BorderSide(color: accentCyan),
-                    ),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide(color: textGrey.withOpacity(0.5))),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: accentCyan)),
                   ),
                 )),
                 const SizedBox(height: 16),
 
                 // Form Konfirmasi Password
                 Obx(() => TextField(
+                  controller: controller.confirmPasswordController,
                   obscureText: controller.isConfirmPasswordHidden.value,
-                  style: const TextStyle(color: textDark), // Teks inputan diubah ke gelap
+                  style: const TextStyle(color: textDark),
                   decoration: InputDecoration(
                     labelText: 'Konfirmasi Password',
                     labelStyle: const TextStyle(color: textGrey),
                     prefixIcon: const Icon(Icons.lock_reset_outlined, color: textGrey),
                     suffixIcon: IconButton(
-                      icon: Icon(
-                        controller.isConfirmPasswordHidden.value 
-                            ? Icons.visibility_off 
-                            : Icons.visibility,
-                        color: textGrey,
-                      ),
+                      icon: Icon(controller.isConfirmPasswordHidden.value ? Icons.visibility_off : Icons.visibility, color: textGrey),
                       onPressed: controller.toggleConfirmPasswordView,
                     ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide(color: textGrey.withOpacity(0.5)),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      borderSide: const BorderSide(color: accentCyan),
-                    ),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide(color: textGrey.withOpacity(0.5))),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: accentCyan)),
                   ),
                 )),
                 const SizedBox(height: 32),
@@ -155,18 +153,13 @@ class RegisterView extends GetView<RegisterController> {
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: accentCyan,
-                      foregroundColor: Colors.white, // Teks tombol diubah ke putih
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                       elevation: 5,
-                      shadowColor: accentCyan.withOpacity(0.3), // Efek glow tombol
+                      shadowColor: accentCyan.withOpacity(0.3),
                     ),
                     onPressed: controller.register,
-                    child: const Text(
-                      'Daftar Sekarang',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
+                    child: const Text('Daftar Sekarang', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -178,13 +171,7 @@ class RegisterView extends GetView<RegisterController> {
                     const Text('Sudah punya akun? ', style: TextStyle(color: textGrey)),
                     GestureDetector(
                       onTap: controller.goToLogin,
-                      child: const Text(
-                        'Masuk',
-                        style: TextStyle(
-                          color: accentCyan,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      child: const Text('Masuk', style: TextStyle(color: accentCyan, fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),
@@ -192,6 +179,22 @@ class RegisterView extends GetView<RegisterController> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  // Widget Bantuan untuk merapikan Textfield yang berulang
+  Widget _buildTextField(TextEditingController textController, String label, IconData icon, {TextInputType keyboardType = TextInputType.text}) {
+    return TextField(
+      controller: textController,
+      keyboardType: keyboardType,
+      style: const TextStyle(color: textDark),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(color: textGrey),
+        prefixIcon: Icon(icon, color: textGrey),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide(color: textGrey.withOpacity(0.5))),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: accentCyan)),
       ),
     );
   }

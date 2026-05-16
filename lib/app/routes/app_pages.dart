@@ -1,5 +1,7 @@
 import 'package:get/get.dart';
 
+import '../modules/app_block_setting/bindings/app_block_setting_binding.dart';
+import '../modules/app_block_setting/views/app_block_setting_view.dart';
 import '../modules/dashboard/bindings/dashboard_binding.dart';
 import '../modules/dashboard/views/dashboard_view.dart';
 import '../modules/eye_monitoring/bindings/eye_monitoring_binding.dart';
@@ -16,6 +18,8 @@ import '../modules/notification/bindings/notification_binding.dart';
 import '../modules/notification/views/notification_view.dart';
 import '../modules/profile/bindings/profile_binding.dart';
 import '../modules/profile/views/profile_view.dart';
+import '../modules/profile_detail/bindings/profile_detail_binding.dart';
+import '../modules/profile_detail/views/profile_detail_view.dart';
 import '../modules/register/bindings/register_binding.dart';
 import '../modules/register/views/register_view.dart';
 
@@ -73,6 +77,16 @@ class AppPages {
       name: _Paths.NOTIFICATION,
       page: () => const NotificationView(),
       binding: NotificationBinding(),
+    ),
+    GetPage(
+      name: _Paths.APP_BLOCK_SETTING,
+      page: () => const AppBlockSettingView(),
+      binding: AppBlockSettingBinding(),
+    ),
+    GetPage(
+      name: _Paths.PROFILE_DETAIL,
+      page: () => const ProfileDetailView(),
+      binding: ProfileDetailBinding(),
     ),
   ];
 }
