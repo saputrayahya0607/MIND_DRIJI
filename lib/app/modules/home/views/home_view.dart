@@ -4,11 +4,11 @@ import '../controllers/home_controller.dart';
 import '../../../routes/app_pages.dart';
 
 // PALET WARNA LIGHT MODE
-const Color bgLight = Color(0xFFF5F7FA); // Putih keabu-abuan untuk background agar tidak silau
-const Color cardLight = Color(0xFFFFFFFF); // Putih bersih untuk kartu/komponen
-const Color textDark = Color(0xFF2D3142); // Hitam kebiruan untuk teks utama
-const Color textGrey = Color(0xFF9094A6); // Abu-abu untuk teks subtitle
-const Color accentCyan = Color(0xFF00BFA5); // Cyan yang sedikit lebih gelap agar kontras di putih
+const Color bgLight = Color(0xFFF5F7FA); 
+const Color cardLight = Color(0xFFFFFFFF); 
+const Color textDark = Color(0xFF2D3142); 
+const Color textGrey = Color(0xFF9094A6); 
+const Color accentCyan = Color(0xFF00BFA5); 
 const Color warningYellow = Color(0xFFFFB300);
 const Color dangerRed = Color(0xFFFF5252);
 
@@ -18,7 +18,7 @@ class HomeView extends GetView<HomeController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: bgLight, // Background berubah jadi terang
+      backgroundColor: bgLight, 
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -47,10 +47,17 @@ class HomeView extends GetView<HomeController> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('Halo, Saputra 👋', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: textDark)),
-          Text('Siap mengelola waktumu hari ini?', style: TextStyle(color: textGrey, fontSize: 12)),
-        ]),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start, 
+          children: [
+            // Menggunakan Obx agar nama berubah secara realtime mengikuti user login
+            Obx(() => Text(
+              'Halo, ${controller.namaUser.value} 👋', 
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: textDark),
+            )),
+            const Text('Siap mengelola waktumu hari ini????', style: TextStyle(color: textGrey, fontSize: 12)),
+          ],
+        ),
         GestureDetector(
           onTap: () => Get.toNamed(Routes.NOTIFICATION),
           child: Container(
