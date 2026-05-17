@@ -10,35 +10,86 @@ const Color textGrey = Color(0xFF9094A6);
 const Color accentCyan = Color(0xFF00BFA5); 
 const Color warningYellow = Color(0xFFFFB300);
 const Color dangerRed = Color(0xFFFF5252);
-const Color barBg = Color(0xFFE2E8F0); // Background abu-abu untuk progress bar
+const Color barBg = Color(0xFFE2E8F0); 
 
 class InsightView extends GetView<InsightController> {
   const InsightView({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    // Memastikan controller terinisialisasi
+    Get.put(InsightController());
+
     return Container(
-      color: bgLight, // Background utama terang
+      color: bgLight,
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // HEADER
+            // ==========================================
+            // 1. HEADER & STATUS KESIMPULAN (TOP LEVEL)
+            // ==========================================
             const Text('AI Health Insight', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: textDark)),
             const SizedBox(height: 4),
             const Text('Analisis perilaku & rekomendasi sistem MIND DRIJI.', style: TextStyle(color: textGrey, fontSize: 12)),
+            const SizedBox(height: 24),
+
+            // Kartu Status Utama (Highlight)
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: dangerRed.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: dangerRed.withOpacity(0.5), width: 1.5)
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: const BoxDecoration(color: dangerRed, shape: BoxShape.circle),
+                    child: const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 28),
+                  ),
+                  const SizedBox(width: 16),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Risiko Doomscrolling:', style: TextStyle(color: dangerRed, fontSize: 12, fontWeight: FontWeight.bold)),
+                        Text('TINGGI', style: TextStyle(color: dangerRed, fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 32),
 
-            // 1. BAGIAN ANALISIS PERILAKU
-            _buildInsightTile(Icons.psychology, 'Pola Doomscrolling', 'AI mendeteksi kecenderungan scrolling tanpa henti pada malam hari (22:00 - 00:00).', warningYellow),
-            const SizedBox(height: 16),
-            _buildInsightTile(Icons.lightbulb_outline, 'Rekomendasi Cerdas', 'Aktifkan filter cahaya biru dan mulai kurangi kecerahan layar setelah jam 8 malam.', accentCyan),
+            // ==========================================
+            // 2. KARTU ANALISIS PERILAKU
+            // ==========================================
+            const Text('Analisis Perilaku', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textDark)),
+            const SizedBox(height: 12),
+            _buildInsightTile(
+              Icons.psychology, 
+              'Pola Doomscrolling', 
+              'Terdeteksi scrolling aplikasi media sosial tanpa henti pukul 22:00 - 00:00.', 
+              warningYellow
+            ),
+            const SizedBox(height: 12),
+            _buildInsightTile(
+              Icons.nights_stay_outlined, 
+              'Aktivitas Malam', 
+              'Screen time meningkat tajam di atas jam 23:00 selama 3 hari berturut-turut.', 
+              warningYellow
+            ),
             const SizedBox(height: 32),
             
-            // 2. BAGIAN DAMPAK FISIK
+            // ==========================================
+            // 3. BAR ESTIMASI DAMPAK FISIK
+            // ==========================================
             const Text('Estimasi Dampak Fisik', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textDark)),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
@@ -46,48 +97,61 @@ class InsightView extends GetView<InsightController> {
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20, offset: const Offset(0, 5))]
               ),
-              child: Obx(() => Column(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildRiskLevel('Tingkat Kelelahan Mata', controller.fatigueLevel.value, dangerRed),
+                  _buildRiskLevel('Tingkat Kelelahan Mata', 0.85, dangerRed), // 85% Merah
                   const SizedBox(height: 20),
-                  _buildRiskLevel('Kualitas Tidur (Defisit)', controller.sleepDeficit.value, warningYellow),
+                  _buildRiskLevel('Defisit Kualitas Tidur', 0.60, warningYellow), // 60% Kuning
                   const SizedBox(height: 20),
-                  _buildRiskLevel('Kemampuan Fokus', 0.45, accentCyan),
+                  _buildRiskLevel('Kemampuan Fokus', 0.45, accentCyan), // 45% Cyan
                 ],
-              )),
+              ),
             ),
             const SizedBox(height: 32),
 
-            // 3. BAGIAN ARTIKEL HASIL WEB SCRAPING
+            // ==========================================
+            // 4. REKOMENDASI & EDUKASI
+            // ==========================================
+            const Text('Saran & Edukasi', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textDark)),
+            const SizedBox(height: 12),
+            
+            // Kartu Rekomendasi Solusi
+            _buildInsightTile(
+              Icons.lightbulb_outline, 
+              'Rekomendasi Tindakan Instan', 
+              'Aktifkan filter cahaya biru (Eye Comfort) sekarang dan gunakan aturan 20-20-20 saat menatap layar.', 
+              accentCyan,
+              isHighlighted: true
+            ),
+            const SizedBox(height: 24),
+
+            // Daftar Artikel Web Scraping
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Artikel Edukasi Kesehatan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textDark)),
+                const Text('Bacaan Kesehatan Digital', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: textDark)),
                 Icon(Icons.sync, color: textGrey.withOpacity(0.5), size: 18), 
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             
-            // Me-render daftar artikel
-            Obx(() => Column(
-              children: controller.scrapedArticles.map((article) {
-                IconData iconData = Icons.article;
-                if (article['icon'] == 'health_and_safety') iconData = Icons.health_and_safety;
-                if (article['icon'] == 'remove_red_eye') iconData = Icons.remove_red_eye;
-                if (article['icon'] == 'psychology') iconData = Icons.psychology;
-
-                return _buildArticleCard(
-                  title: article['title'].toString(),
-                  source: article['source'].toString(),
-                  time: article['time'].toString(),
-                  icon: iconData,
-                );
-              }).toList(),
-            )),
+            // Render Statis untuk Demo (Bisa diubah ke Obx/Controller nanti)
+            _buildArticleCard(
+              title: 'Dampak Doomscrolling pada Kesehatan Otak dan Mental Remaja',
+              source: 'Kemenkes RI',
+              time: '2 Jam yang lalu',
+              icon: Icons.psychology,
+            ),
+            _buildArticleCard(
+              title: 'Cara Menerapkan Aturan 20-20-20 untuk Mencegah Mata Lelah',
+              source: 'Halodoc',
+              time: '5 Jam yang lalu',
+              icon: Icons.remove_red_eye,
+            ),
             
             const SizedBox(height: 24),
-            const Center(child: Text('Data artikel diambil secara otomatis dari portal web.', style: TextStyle(color: textGrey, fontSize: 10, fontStyle: FontStyle.italic))),
+            const Center(child: Text('Data artikel ditarik otomatis oleh AI Web Scraper.', style: TextStyle(color: textGrey, fontSize: 10, fontStyle: FontStyle.italic))),
             const SizedBox(height: 40),
           ],
         ),
@@ -99,28 +163,28 @@ class InsightView extends GetView<InsightController> {
   // WIDGET HELPERS
   // ==========================================
 
-  Widget _buildInsightTile(IconData icon, String title, String desc, Color color) {
+  Widget _buildInsightTile(IconData icon, String title, String desc, Color color, {bool isHighlighted = false}) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: cardLight, 
+        color: isHighlighted ? color.withOpacity(0.05) : cardLight, 
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 15, offset: const Offset(0, 4))],
-        border: Border.all(color: color.withOpacity(0.2), width: 1)
+        boxShadow: isHighlighted ? [] : [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 15, offset: const Offset(0, 4))],
+        border: Border.all(color: color.withOpacity(0.3), width: 1.5)
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
+            decoration: BoxDecoration(color: color.withOpacity(0.15), shape: BoxShape.circle),
             child: Icon(icon, color: color, size: 24)
           ),
           const SizedBox(width: 16),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(title, style: TextStyle(color: textDark, fontWeight: FontWeight.bold, fontSize: 14)),
             const SizedBox(height: 6),
-            Text(desc, style: const TextStyle(color: textGrey, fontSize: 12, height: 1.5)),
+            Text(desc, style: TextStyle(color: isHighlighted ? textDark : textGrey, fontSize: 12, height: 1.5)),
           ]))
         ]
       ),
@@ -143,7 +207,7 @@ class InsightView extends GetView<InsightController> {
           value: value, 
           color: color, 
           backgroundColor: barBg, 
-          minHeight: 8
+          minHeight: 10 // Bar sedikit dipertebal agar lebih jelas
         ),
       ),
     ]);
