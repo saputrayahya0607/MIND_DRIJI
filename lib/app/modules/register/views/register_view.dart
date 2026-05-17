@@ -34,7 +34,7 @@ class RegisterView extends GetView<RegisterController> {
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start, // Ubah ke kiri agar label rapi
+              crossAxisAlignment: CrossAxisAlignment.start, 
               children: [
                 const Center(
                   child: Icon(Icons.person_add_outlined, size: 60, color: accentCyan),
@@ -146,11 +146,11 @@ class RegisterView extends GetView<RegisterController> {
                 )),
                 const SizedBox(height: 32),
 
-                // Tombol Daftar
+                // Tombol Daftar dengan Efek Loading di Tengah Teks (Stack)
                 SizedBox(
                   width: double.infinity,
                   height: 50,
-                  child: ElevatedButton(
+                  child: Obx(() => ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: accentCyan,
                       foregroundColor: Colors.white,
@@ -158,9 +158,33 @@ class RegisterView extends GetView<RegisterController> {
                       elevation: 5,
                       shadowColor: accentCyan.withOpacity(0.3),
                     ),
-                    onPressed: controller.register,
-                    child: const Text('Daftar Sekarang', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  ),
+                    onPressed: controller.isLoading.value 
+                        ? null 
+                        : () => controller.register(),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // Teks tetap ada, cuma transparan 70% saat loading biar fokus ke spinner
+                        Opacity(
+                          opacity: controller.isLoading.value ? 0.3 : 1.0,
+                          child: const Text(
+                            'Daftar Sekarang', 
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        // Loading berputar manis tepat di tengah-tengah teks
+                        if (controller.isLoading.value)
+                          const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2.5,
+                            ),
+                          ),
+                      ],
+                    ),
+                  )),
                 ),
                 const SizedBox(height: 24),
 

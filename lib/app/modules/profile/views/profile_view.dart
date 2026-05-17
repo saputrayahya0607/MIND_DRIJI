@@ -3,8 +3,8 @@ import 'package:flutter_application_1/app/modules/profile_detail/views/profile_d
 import 'package:get/get.dart';
 import '../controllers/profile_controller.dart';
 import '../../../routes/app_pages.dart'; 
+import '../../home/controllers/home_controller.dart'; // IMPORT HomeController UNTUK MENGAMBIL DATA GLOBAL
 
-// PALET WARNA LIGHT MODE
 const Color bgLight = Color(0xFFF5F7FA);
 const Color cardLight = Color(0xFFFFFFFF);
 const Color textDark = Color(0xFF2D3142);
@@ -24,12 +24,10 @@ class ProfileView extends GetView<ProfileController> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. BAGIAN INFO AKUN (Klik Foto untuk Edit Profil)
             Center(
               child: Column(
                 children: [
                   GestureDetector(
-                    // NAVIGASI LANGSUNG KE HALAMAN EDIT PROFIL
                     onTap: () => Get.to(() => const ProfileDetailView()), 
                     child: Stack(
                       alignment: Alignment.bottomRight,
@@ -46,15 +44,23 @@ class ProfileView extends GetView<ProfileController> {
                             shape: BoxShape.circle, 
                             border: Border.all(color: cardLight, width: 2)
                           ),
-                          // IKON DIUBAH MENJADI PENSIL (EDIT)
                           child: const Icon(Icons.edit, size: 14, color: cardLight),
                         )
                       ],
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Text('Saputra Aditama', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: textDark)),
-                  const Text('saputra@driji.ai', style: TextStyle(color: textGrey, fontSize: 14)),
+                  
+                  // ➡️ BUNGKUS NAMA DAN EMAIL DENGAN Obx()
+                  Obx(() => Text(
+                    controller.userName.value, 
+                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: textDark)
+                  )),
+                  Obx(() => Text(
+                    controller.userEmail.value, 
+                    style: const TextStyle(color: textGrey, fontSize: 14)
+                  )),
+                  
                   const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -70,7 +76,6 @@ class ProfileView extends GetView<ProfileController> {
             ),
             const SizedBox(height: 40),
 
-            // 2. KELOLA BLOKIR APLIKASI
             const Text('Kontrol Aplikasi', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textDark)),
             const SizedBox(height: 12),
             Container(
@@ -88,7 +93,6 @@ class ProfileView extends GetView<ProfileController> {
             ),
             const SizedBox(height: 24),
 
-            // 3. BAGIAN SISTEM & LOGOUT
             const Text('Sistem', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textDark)),
             const SizedBox(height: 12),
             Container(
@@ -114,7 +118,11 @@ class ProfileView extends GetView<ProfileController> {
                         textConfirm: 'Keluar',
                         confirmTextColor: Colors.white,
                         buttonColor: dangerRed,
-                        onConfirm: () => Get.offAllNamed(Routes.LOGIN),
+                        onConfirm: () {
+                          // ➡️ TAMBAHAN: Bersihkan wadah data login saat logout
+                          HomeController.dataUserLogin = null;
+                          Get.offAllNamed(Routes.LOGIN);
+                        }
                       );
                     },
                     leading: const Icon(Icons.logout, color: dangerRed),

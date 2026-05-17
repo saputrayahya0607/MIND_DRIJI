@@ -2,6 +2,12 @@ import 'package:get/get.dart';
 import 'dart:async';
 
 class HomeController extends GetxController {
+  // ➡️ 1. SUNTIKKAN BARIS INI (Wadah statis global)
+  static Map<String, dynamic>? dataUserLogin;
+
+  // State untuk Nama User (Default: Saputra sebagai fallback)
+  var namaUser = 'Saputra'.obs;
+
   // State Toggle Umum
   var isHealthInsightActive = true.obs;
 
@@ -9,13 +15,32 @@ class HomeController extends GetxController {
   var isMonitoringActive = false.obs;
   var statusActivityLooping = "Menunggu diaktifkan".obs;
 
-  // State Khusus Notifikasi Cerdas (BARU)
+  // State Khusus Notifikasi Cerdas
   var isSmartNotifActive = false.obs;
   var statusSmartNotif = "Menunggu diaktifkan".obs;
 
   // State Khusus Eye Monitoring
   var isEyeMonitorActive = false.obs;
   var statusLooping = "Menunggu diaktifkan".obs; 
+
+  @override
+  void onInit() {
+    super.onInit();
+    
+    // ➡️ 2. GANTI ISI onInit JADI SEPERTI INI
+    print("====== CEK KIRIMAN DARI LOGIN VIA STATIS ======");
+    print("Isi dataUserLogin: $dataUserLogin");
+    
+    if (dataUserLogin != null) {
+      print("Kunci nama_lengkap: ${dataUserLogin!['nama_lengkap']}");
+      
+      if (dataUserLogin!['nama_lengkap'] != null) {
+        // Ganti nama default jadi nama asli user login
+        namaUser.value = dataUserLogin!['nama_lengkap'];
+      }
+    }
+    print("===============================================");
+  }
 
   void toggleHealthInsight(bool value) => isHealthInsightActive.value = value;
 

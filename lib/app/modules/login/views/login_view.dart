@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/login_controller.dart';
-// import '../../../core/theme/app_colors.dart'; // Aktifkan jika pakai app_colors.dart
 
 // PALET WARNA LIGHT MODE
 const Color bgLight = Color(0xFFF5F7FA); 
@@ -10,24 +9,32 @@ const Color textDark = Color(0xFF2D3142);
 const Color textGrey = Color(0xFF9094A6); 
 const Color accentCyan = Color(0xFF00BFA5); 
 
+// Tetap gunakan GetView sesuai standar GetX arsitektur kamu
 class LoginView extends GetView<LoginController> {
   const LoginView({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    // 🛠️ JARING PENGAMAN GETX: 
+    // Jika LoginController terlanjur terhapus oleh 'Get.offAllNamed', 
+    // baris ini akan otomatis melahirkan controller baru yang fresh, anti-disposed!
+    final loginCtrl = Get.isRegistered<LoginController>() 
+        ? Get.find<LoginController>() 
+        : Get.put(LoginController());
+
     return Scaffold(
-      backgroundColor: bgLight, // Diubah ke warna latar terang
+      backgroundColor: bgLight, 
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: Container(
             padding: const EdgeInsets.all(32.0),
             decoration: BoxDecoration(
-              color: cardLight, // Diubah ke warna card putih
+              color: cardLight, 
               borderRadius: BorderRadius.circular(30),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05), // Bayangan hitam halus untuk tema terang
+                  color: Colors.black.withOpacity(0.05), 
                   blurRadius: 20,
                   spreadRadius: 2,
                 ),
@@ -49,14 +56,16 @@ class LoginView extends GetView<LoginController> {
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: textDark, // Teks diubah ke gelap
+                    color: textDark, 
                   ),
                 ),
                 const SizedBox(height: 32),
 
                 // Form Email
                 TextField(
-                  style: const TextStyle(color: textDark), // Teks inputan diubah ke gelap
+                  controller: loginCtrl.emailController, // Menggunakan jaring pengaman loginCtrl
+                  style: const TextStyle(color: textDark), 
+                  keyboardType: TextInputType.emailAddress,
                   decoration: InputDecoration(
                     labelText: 'Email',
                     labelStyle: const TextStyle(color: textGrey),
@@ -75,20 +84,21 @@ class LoginView extends GetView<LoginController> {
 
                 // Form Password
                 Obx(() => TextField(
-                  obscureText: controller.isPasswordHidden.value,
-                  style: const TextStyle(color: textDark), // Teks inputan diubah ke gelap
+                  controller: loginCtrl.passwordController, // Menggunakan jaring pengaman loginCtrl
+                  obscureText: loginCtrl.isPasswordHidden.value,
+                  style: const TextStyle(color: textDark), 
                   decoration: InputDecoration(
                     labelText: 'Password',
                     labelStyle: const TextStyle(color: textGrey),
                     prefixIcon: const Icon(Icons.lock_outline, color: textGrey),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        controller.isPasswordHidden.value 
+                        loginCtrl.isPasswordHidden.value 
                             ? Icons.visibility_off 
                             : Icons.visibility,
                         color: textGrey,
                       ),
-                      onPressed: controller.togglePasswordView,
+                      onPressed: loginCtrl.togglePasswordView,
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
@@ -118,22 +128,39 @@ class LoginView extends GetView<LoginController> {
                 SizedBox(
                   width: double.infinity,
                   height: 50,
-                  child: ElevatedButton(
+                  child: Obx(() => ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: accentCyan,
-                      foregroundColor: Colors.white, // Teks tombol login jadi putih
+                      foregroundColor: Colors.white, 
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15),
                       ),
                       elevation: 5,
-                      shadowColor: accentCyan.withOpacity(0.3), // Glow tipis warna cyan
+                      shadowColor: accentCyan.withOpacity(0.3), 
                     ),
-                    onPressed: controller.login,
-                    child: const Text(
-                      'Masuk',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    onPressed: loginCtrl.isLoading.value ? null : () => loginCtrl.login(),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Opacity(
+                          opacity: loginCtrl.isLoading.value ? 0.3 : 1.0,
+                          child: const Text(
+                            'Masuk',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        if (loginCtrl.isLoading.value)
+                          const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2.5,
+                            ),
+                          ),
+                      ],
                     ),
-                  ),
+                  )),
                 ),
                 const SizedBox(height: 16),
 
@@ -148,11 +175,11 @@ class LoginView extends GetView<LoginController> {
                         borderRadius: BorderRadius.circular(15),
                       ),
                     ),
-                    onPressed: controller.loginWithGoogle,
-                    icon: const Icon(Icons.g_mobiledata, size: 30, color: textDark), // Ikon google diubah ke gelap
+                    onPressed: loginCtrl.loginWithGoogle,
+                    icon: const Icon(Icons.g_mobiledata, size: 30, color: textDark), 
                     label: const Text(
                       'Lanjutkan dengan Google',
-                      style: TextStyle(color: textDark), // Teks google diubah ke gelap
+                      style: TextStyle(color: textDark), 
                     ),
                   ),
                 ),
@@ -164,7 +191,7 @@ class LoginView extends GetView<LoginController> {
                   children: [
                     const Text('Belum punya akun? ', style: TextStyle(color: textGrey)),
                     GestureDetector(
-                      onTap: controller.goToRegister,
+                      onTap: loginCtrl.goToRegister,
                       child: const Text(
                         'Daftar',
                         style: TextStyle(
