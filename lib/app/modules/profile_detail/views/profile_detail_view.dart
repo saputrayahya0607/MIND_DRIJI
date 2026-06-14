@@ -138,7 +138,7 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
 
     try {
       // Ganti IP sesuai dengan lokal server Flask kamu
-      final url = Uri.parse('http://192.168.0.103:5000/api/profile/update');
+      final url = Uri.parse('http://192.168.0.101:5000/api/profile/update');
 
       Map<String, dynamic> profileData = {
         'email': email, 

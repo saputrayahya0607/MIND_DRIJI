@@ -1,56 +1,171 @@
+import 'package:flutter/widgets.dart'; // <-- TAMBAHKAN INI UNTUK APP LIFECYCLE
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:usage_stats/usage_stats.dart'; 
 import 'dart:async';
 
-class HomeController extends GetxController {
-  // ➡️ 1. SUNTIKKAN BARIS INI (Wadah statis global)
+// Tambahkan "with WidgetsBindingObserver" di sini
+class HomeController extends GetxController with WidgetsBindingObserver {
+  // =========================
+  // DATA USER
+  // =========================
+
   static Map<String, dynamic>? dataUserLogin;
 
-  // State untuk Nama User (Default: Saputra sebagai fallback)
   var namaUser = 'Saputra'.obs;
 
-  // State Toggle Umum
-  var isHealthInsightActive = true.obs;
+  // =========================
+  // HEALTH SCORE
+  // =========================
 
-  // State Khusus Monitoring Aktivitas
-  var isMonitoringActive = false.obs;
-  var statusActivityLooping = "Menunggu diaktifkan".obs;
+  var healthScore = 72.obs;
+  var screenTime = '5j 20m'.obs;
+  var doomscrollStatus = 'Tinggi'.obs;
+  var eyeCondition = 'Lelah'.obs;
 
-  // State Khusus Notifikasi Cerdas
+  // =========================
+  // MONITORING AKTIVITAS
+  // =========================
+
+  var hasUsagePermission = false.obs;
+
+  var statusActivityLooping =
+      "Ketuk untuk memberikan izin akses".obs;
+
+  // =========================
+  // NOTIFIKASI CERDAS
+  // =========================
+
   var isSmartNotifActive = false.obs;
   var statusSmartNotif = "Menunggu diaktifkan".obs;
 
-  // State Khusus Eye Monitoring
+  // =========================
+  // HEALTH INSIGHT
+  // =========================
+
+  var isHealthInsightActive = true.obs;
+
+  // =========================
+  // EYE MONITORING
+  // =========================
+
   var isEyeMonitorActive = false.obs;
-  var statusLooping = "Menunggu diaktifkan".obs; 
+  var statusLooping = "Menunggu diaktifkan".obs;
+
+  // =========================
+  // INIT
+  // =========================
 
   @override
   void onInit() {
     super.onInit();
     
-    // ➡️ 2. GANTI ISI onInit JADI SEPERTI INI
-    print("====== CEK KIRIMAN DARI LOGIN VIA STATIS ======");
-    print("Isi dataUserLogin: $dataUserLogin");
-    
-    if (dataUserLogin != null) {
-      print("Kunci nama_lengkap: ${dataUserLogin!['nama_lengkap']}");
-      
-      if (dataUserLogin!['nama_lengkap'] != null) {
-        // Ganti nama default jadi nama asli user login
-        namaUser.value = dataUserLogin!['nama_lengkap'];
-      }
+    // 1. Daftarkan controller ini sebagai observer lifecycle aplikasi
+    WidgetsBinding.instance.addObserver(this);
+
+    if (dataUserLogin != null &&
+        dataUserLogin!['nama_lengkap'] != null) {
+      namaUser.value = dataUserLogin!['nama_lengkap'];
+
+      print(
+        "Berhasil sinkronisasi nama dari dataUserLogin: ${namaUser.value}",
+      );
+    } else if (Get.arguments != null &&
+        Get.arguments['nama_lengkap'] != null) {
+      namaUser.value = Get.arguments['nama_lengkap'];
     }
-    print("===============================================");
+
+    checkUsagePermission();
   }
 
-  void toggleHealthInsight(bool value) => isHealthInsightActive.value = value;
+  @override
+  void onReady() {
+    super.onReady();
 
-  // === LOGIKA NOTIFIKASI CERDAS ===
+    // Cek lagi ketika halaman aktif
+    checkUsagePermission();
+  }
+
+  @override
+  void onClose() {
+    // 2. Hapus observer saat controller dihancurkan agar tidak memory leak
+    WidgetsBinding.instance.removeObserver(this);
+    
+    isEyeMonitorActive.value = false;
+    super.onClose();
+  }
+
+  // =========================
+  // DETEKSI LIFECYCLE (BARU)
+  // =========================
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    
+    // Jika aplikasi kembali ke layar utama (setelah user buka Settings)
+    if (state == AppLifecycleState.resumed) {
+      checkUsagePermission(); // Otomatis cek izin secara real-time!
+    }
+  }
+
+  // =========================
+  // USAGE ACCESS
+  // =========================
+
+  Future<void> checkUsagePermission() async {
+    try {
+      bool granted = await UsageStats.checkUsagePermission() ?? false;
+
+      hasUsagePermission.value = granted;
+
+      if (granted) {
+        statusActivityLooping.value = "Monitoring Aktif";
+      } else {
+        statusActivityLooping.value = "Ketuk untuk memberikan izin akses";
+      }
+    } catch (e) {
+      statusActivityLooping.value = "Gagal memeriksa izin";
+    }
+  }
+
+  Future<void> openUsageAccessSettings() async {
+    try {
+      // Buka halaman pengaturan Android
+      await UsageStats.grantUsagePermission();
+
+      // NOTED: Fungsi Future.delayed di sini dihapus karena logic pengecekan 
+      // sudah digantikan oleh didChangeAppLifecycleState yang jauh lebih akurat.
+      
+    } on PlatformException {
+      Get.snackbar(
+        'Gagal',
+        'Tidak dapat membuka halaman perizinan',
+        snackPosition: SnackPosition.TOP,
+      );
+    }
+  }
+
+  // =========================
+  // HEALTH INSIGHT
+  // =========================
+
+  void toggleHealthInsight(bool value) {
+    isHealthInsightActive.value = value;
+  }
+
+  // =========================
+  // NOTIFIKASI CERDAS
+  // =========================
+
   void toggleSmartNotif(bool value) {
     isSmartNotifActive.value = value;
+
     if (value) {
-      statusSmartNotif.value = "AI Engine siap mengirim peringatan real-time.";
+      statusSmartNotif.value =
+          "AI Engine siap mengirim peringatan real-time.";
+
       Get.snackbar(
-        'Notifikasi Aktif', 
+        'Notifikasi Aktif',
         'Anda akan menerima peringatan jika terdeteksi kelelahan mata.',
         snackPosition: SnackPosition.TOP,
       );
@@ -59,19 +174,13 @@ class HomeController extends GetxController {
     }
   }
 
-  // === LOGIKA MONITORING AKTIVITAS ===
-  void toggleMonitoring(bool value) {
-    isMonitoringActive.value = value;
-    if (value) {
-      statusActivityLooping.value = "Merekam Screen Time di latar belakang...";
-    } else {
-      statusActivityLooping.value = "Sistem Dimatikan";
-    }
-  }
+  // =========================
+  // EYE MONITORING
+  // =========================
 
-  // === LOGIKA EYE MONITORING ===
   void toggleEyeMonitor(bool value) {
     isEyeMonitorActive.value = value;
+
     if (value) {
       statusLooping.value = "Sistem Aktif";
       _startEyeMonitoringLoop();
@@ -80,13 +189,25 @@ class HomeController extends GetxController {
     }
   }
 
-  void _startEyeMonitoringLoop() async {
-    while (isEyeMonitorActive.value == true) {
-      statusLooping.value = "Menganalisis wajah (10 detik)...";
-      await Future.delayed(const Duration(seconds: 10));
-      if (isEyeMonitorActive.value == false) break;
-      statusLooping.value = "Jeda (Mode Hemat Baterai)";
-      await Future.delayed(const Duration(minutes: 5));
+  Future<void> _startEyeMonitoringLoop() async {
+    while (isEyeMonitorActive.value) {
+      statusLooping.value =
+          "Menganalisis wajah (10 detik)...";
+
+      await Future.delayed(
+        const Duration(seconds: 10),
+      );
+
+      if (!isEyeMonitorActive.value) {
+        break;
+      }
+
+      statusLooping.value =
+          "Jeda (Mode Hemat Baterai)";
+
+      await Future.delayed(
+        const Duration(minutes: 5),
+      );
     }
   }
 }

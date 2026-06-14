@@ -73,7 +73,7 @@ class RegisterController extends GetxController {
       String formattedDate = "${tanggalLahir.value.toLocal()}".split(' ')[0];
 
       // Alamat endpoint backend Flask
-      final url = Uri.parse('http://192.168.0.103:5000/api/register');
+      final url = Uri.parse('http://192.168.0.101:5000/api/register');
 
       // Format map data ke Flask
       Map<String, dynamic> registerData = {
@@ -110,10 +110,10 @@ class RegisterController extends GetxController {
         // 2. Beri jeda 1.5 detik biar user sempat baca pop-up nya
         await Future.delayed(const Duration(milliseconds: 1500));
         
-        // 3. 🛠️ FIX: Bersihkan form DULUAN sebelum halaman dihancurkan dari memori
+        // 3. Bersihkan form
         clearForm();
         
-        // 4. 🚀 BARU PINDAH HALAMAN (Mereset total stack navigasi ke login)
+        // 4. Kembali ke halaman login yang ada di stack bawah
         goToLogin(); 
       } else {
         Get.snackbar('Gagal', responseData['message'] ?? 'Terjadi kesalahan sistem.',
@@ -139,8 +139,8 @@ class RegisterController extends GetxController {
   }
 
   void goToLogin() {
-    // Memaksa balik ke rute login secara absolut dan bersih
-    Get.offAllNamed('/login'); 
+    // Cukup gunakan Get.back() karena rute Login sudah ada di bawah Register
+    Get.back(); 
   }
 
   @override

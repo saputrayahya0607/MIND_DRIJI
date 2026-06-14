@@ -30,7 +30,7 @@ class LoginController extends GetxController {
     isLoading.value = true; 
 
     try {
-      final url = Uri.parse('http://192.168.0.103:5000/api/login');
+      final url = Uri.parse('http://192.168.0.101:5000/api/login');
 
       Map<String, dynamic> loginData = {
         'email': emailController.text.trim(),

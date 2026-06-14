@@ -32,7 +32,7 @@ class HomeView extends GetView<HomeController> {
               const Text('Kontrol AI Monitoring', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textDark)),
               const SizedBox(height: 16),
               
-              _buildActivityMonitorToggle(),
+              _buildActivityMonitoringStatus(),
               _buildSmartNotifToggle(),
               _buildToggle('Health Insight', 'Analisis dampak kesehatan', controller.isHealthInsightActive, controller.toggleHealthInsight),
               _buildEyeMonitorToggle(),
@@ -106,58 +106,138 @@ class HomeView extends GetView<HomeController> {
     );
   }
 
-  Widget _buildActivityMonitorToggle() {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: cardLight, 
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
-        border: Border.all(
-          color: controller.isMonitoringActive.value ? accentCyan : Colors.transparent,
-          width: 1
-        )
-      ),
-      child: Obx(() => Column(
-        children: [
-          ListTile(
-            title: const Text('Monitoring Aktivitas', style: TextStyle(color: textDark, fontWeight: FontWeight.bold)),
-            subtitle: const Text('Lacak penggunaan aplikasi', style: TextStyle(color: textGrey, fontSize: 12)),
-            trailing: Switch(value: controller.isMonitoringActive.value, activeColor: accentCyan, onChanged: controller.toggleMonitoring),
+  Widget _buildActivityMonitoringStatus() {
+  return Obx(() {
+    final bool granted =
+        controller.hasUsagePermission.value;
+
+    return GestureDetector(
+      onTap: granted
+          ? null
+          : controller.openUsageAccessSettings,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: cardLight,
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+          border: Border.all(
+            color: granted
+                ? accentCyan.withOpacity(0.3)
+                : warningYellow.withOpacity(0.5),
           ),
-          if (controller.isMonitoringActive.value)
-            Padding(
-              padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(color: accentCyan.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment:
+                CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    granted
+                        ? Icons.check_circle
+                        : Icons.warning_amber_rounded,
+                    color: granted
+                        ? accentCyan
+                        : warningYellow,
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Monitoring Aktivitas',
+                    style: TextStyle(
+                      color: textDark,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 6),
+
+              Text(
+                granted
+                    ? 'Mengumpulkan data penggunaan aplikasi secara otomatis'
+                    : 'Aplikasi memerlukan izin Usage Access',
+                style: const TextStyle(
+                  color: textGrey,
+                  fontSize: 12,
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: granted
+                      ? accentCyan.withOpacity(0.1)
+                      : warningYellow.withOpacity(0.15),
+                  borderRadius:
+                      BorderRadius.circular(10),
+                ),
                 child: Row(
                   children: [
-                    const Icon(Icons.data_usage, color: accentCyan, size: 16),
+                    Icon(
+                      granted
+                          ? Icons.check_circle_outline
+                          : Icons.touch_app,
+                      color: granted
+                          ? accentCyan
+                          : warningYellow,
+                    ),
                     const SizedBox(width: 8),
-                    Expanded(child: Text('Status: ${controller.statusActivityLooping.value}', style: const TextStyle(color: accentCyan, fontSize: 12, fontStyle: FontStyle.italic))),
+                    Expanded(
+                      child: Text(
+                        controller
+                            .statusActivityLooping
+                            .value,
+                        style: TextStyle(
+                          color: granted
+                              ? accentCyan
+                              : warningYellow,
+                          fontWeight:
+                              FontWeight.w600,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
-            ),
-        ],
-      )),
+            ],
+          ),
+        ),
+      ),
     );
-  }
+  });
+}
 
   Widget _buildSmartNotifToggle() {
-    return Container(
+    // Obx dipindah ke paling luar agar Container ikut di-rebuild
+    return Obx(() => Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: cardLight, 
         borderRadius: BorderRadius.circular(15),
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
         border: Border.all(
+          // Sekarang warna border ini akan reaktif!
           color: controller.isSmartNotifActive.value ? accentCyan : Colors.transparent,
           width: 1
         )
       ),
-      child: Obx(() => Column(
+      child: Column(
         children: [
           ListTile(
             title: const Text('Notifikasi Cerdas', style: TextStyle(color: textDark, fontWeight: FontWeight.bold)),
@@ -180,12 +260,12 @@ class HomeView extends GetView<HomeController> {
               ),
             ),
         ],
-      )),
-    );
+      ),
+    ));
   }
 
   Widget _buildEyeMonitorToggle() {
-    return Container(
+    return Obx(() => Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: cardLight, 
@@ -196,7 +276,7 @@ class HomeView extends GetView<HomeController> {
           width: 1
         )
       ),
-      child: Obx(() => Column(
+      child: Column(
         children: [
           ListTile(
             onTap: () => Get.toNamed(Routes.EYE_MONITORING),
@@ -220,8 +300,8 @@ class HomeView extends GetView<HomeController> {
               ),
             ),
         ],
-      )),
-    );
+      ),
+    ));
   }
 
   Widget _buildToggle(String title, String subtitle, RxBool rxValue, Function(bool) onChanged) {
