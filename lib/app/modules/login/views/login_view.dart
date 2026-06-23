@@ -10,7 +10,7 @@ const Color textGrey = Color(0xFF9094A6);
 const Color accentCyan = Color(0xFF00BFA5); 
 
 class LoginView extends GetView<LoginController> {
-  const LoginView({Key? key}) : super(key: key);
+  const LoginView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +26,7 @@ class LoginView extends GetView<LoginController> {
               borderRadius: BorderRadius.circular(30),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05), 
+                  color: Colors.black.withValues(alpha: 0.5), 
                   blurRadius: 20,
                   spreadRadius: 2,
                 ),
@@ -36,10 +36,9 @@ class LoginView extends GetView<LoginController> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 // Logo & Header
-                const Icon(
-                  Icons.shield_outlined,
-                  size: 60,
-                  color: accentCyan,
+                Image.asset(
+                  'assets/images/Logo Mind Driji.png',
+                  width: 120,
                 ),
                 const SizedBox(height: 16),
                 const Text(
@@ -64,7 +63,7 @@ class LoginView extends GetView<LoginController> {
                     prefixIcon: const Icon(Icons.email_outlined, color: textGrey),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide(color: textGrey.withOpacity(0.5)),
+                      borderSide: BorderSide(color: textGrey.withValues(alpha: 0.5)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
@@ -94,7 +93,7 @@ class LoginView extends GetView<LoginController> {
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide(color: textGrey.withOpacity(0.5)),
+                      borderSide: BorderSide(color: textGrey.withValues(alpha: 0.5)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
@@ -128,7 +127,7 @@ class LoginView extends GetView<LoginController> {
                         borderRadius: BorderRadius.circular(15),
                       ),
                       elevation: 5,
-                      shadowColor: accentCyan.withOpacity(0.3), 
+                      shadowColor: accentCyan.withValues(alpha: 0.3), 
                     ),
                     onPressed: controller.isLoading.value ? null : () => controller.login(),
                     child: Stack(
@@ -162,7 +161,7 @@ class LoginView extends GetView<LoginController> {
                   height: 50,
                   child: OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: textGrey.withOpacity(0.5)),
+                      side: BorderSide(color: textGrey.withValues(alpha: 0.5)),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15),
                       ),

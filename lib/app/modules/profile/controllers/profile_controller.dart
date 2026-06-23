@@ -1,34 +1,40 @@
 import 'package:get/get.dart';
-// ➡️ 1. IMPORT HomeController UNTUK MENGAMBIL DATA GLOBAL
-import '../../home/controllers/home_controller.dart'; 
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ProfileController extends GetxController {
-  // ➡️ 2. BUAT STATE REAKTIF UNTUK NAMA & EMAIL (Sediakan default fallback)
-  var userName = 'User'.obs;
-  var userEmail = 'user@driji.ai'.obs;
+final supabase = Supabase.instance.client;
 
-  @override
-  void onInit() {
-    super.onInit();
-    
-    // ➡️ 3. BACA DATA DARI WADAH STATIS LOGIN
-    if (HomeController.dataUserLogin != null) {
-      if (HomeController.dataUserLogin!['nama_lengkap'] != null) {
-        userName.value = HomeController.dataUserLogin!['nama_lengkap'];
-      }
-      if (HomeController.dataUserLogin!['email'] != null) {
-        userEmail.value = HomeController.dataUserLogin!['email'];
-      }
-    }
-  }
+var userName = 'User'.obs;
+var userEmail = ''.obs;
 
-  @override
-  void onReady() {
-    super.onReady();
-  }
+@override
+void onInit() {
+super.onInit();
+loadUser();
+}
 
-  @override
-  void onClose() {
-    super.onClose();
+void loadUser() {
+final user = supabase.auth.currentUser;
+
+if (user != null) {
+  userEmail.value = user.email ?? '';
+
+  final nama =
+      user.userMetadata?['nama_lengkap'];
+
+  if (nama != null &&
+      nama.toString().isNotEmpty) {
+    userName.value = nama;
+  } else {
+    userName.value =
+        user.email?.split('@').first ??
+        'User';
   }
+}
+
+}
+
+Future<void> logout() async {
+await supabase.auth.signOut();
+}
 }

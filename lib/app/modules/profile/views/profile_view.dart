@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/app/modules/profile_detail/views/profile_detail_view.dart';
+// import 'package:flutter_application_1/app/modules/profile_detail/views/profile_detail_view.dart';
 import 'package:get/get.dart';
 import '../controllers/profile_controller.dart';
 import '../../../routes/app_pages.dart'; 
-import '../../home/controllers/home_controller.dart'; // IMPORT HomeController UNTUK MENGAMBIL DATA GLOBAL
+
 
 const Color bgLight = Color(0xFFF5F7FA);
 const Color cardLight = Color(0xFFFFFFFF);
@@ -28,7 +28,10 @@ class ProfileView extends GetView<ProfileController> {
               child: Column(
                 children: [
                   GestureDetector(
-                    onTap: () => Get.to(() => const ProfileDetailView()), 
+                    // onTap: () => Get.to(() => const ()),
+                    onTap: () => Get.toNamed(
+                      Routes.PROFILE_DETAIL,
+                    ), 
                     child: Stack(
                       alignment: Alignment.bottomRight,
                       children: [
@@ -62,15 +65,14 @@ class ProfileView extends GetView<ProfileController> {
                   )),
                   
                   const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: accentCyan.withOpacity(0.1), 
-                      borderRadius: BorderRadius.circular(20), 
-                      border: Border.all(color: accentCyan.withOpacity(0.5))
-                    ),
-                    child: const Text('Beta Tester', style: TextStyle(color: accentCyan, fontSize: 12, fontWeight: FontWeight.bold)),
-                  ),
+                  // Container(
+                  //   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  //   decoration: BoxDecoration(
+                  //     color: accentCyan.withValues(alpha: 0.1), 
+                  //     borderRadius: BorderRadius.circular(20)
+                  //   ),
+                  //   child: const Text('Premium User', style: TextStyle(color: accentCyan, fontSize: 12, fontWeight: FontWeight.w500)),
+                  // )
                 ],
               ),
             ),
@@ -110,36 +112,49 @@ class ProfileView extends GetView<ProfileController> {
                       Get.defaultDialog(
                         backgroundColor: cardLight,
                         title: 'Keluar Akun?',
-                        titleStyle: const TextStyle(color: textDark, fontWeight: FontWeight.bold),
-                        middleText: 'Sesi pemantauan AI akan dihentikan sementara.',
-                        middleTextStyle: const TextStyle(color: textGrey),
+                        titleStyle: const TextStyle(
+                          color: textDark,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        middleText:
+                            'Sesi pemantauan AI akan dihentikan sementara.',
+                        middleTextStyle: const TextStyle(
+                          color: textGrey,
+                        ),
                         textCancel: 'Batal',
                         cancelTextColor: textGrey,
                         textConfirm: 'Keluar',
                         confirmTextColor: Colors.white,
                         buttonColor: dangerRed,
-                        onConfirm: () {
-                          // ➡️ TAMBAHAN: Bersihkan wadah data login saat logout
-                          HomeController.dataUserLogin = null;
-                          Get.offAllNamed(Routes.LOGIN);
-                        }
+                        onConfirm: () async {
+                          await controller.logout();
+
+                          Get.offAllNamed(
+                            Routes.LOGIN,
+                          );
+                        },
                       );
                     },
-                    leading: const Icon(Icons.logout, color: dangerRed),
-                    title: const Text('Keluar Akun', style: TextStyle(color: dangerRed, fontWeight: FontWeight.bold)),
+                    leading: const Icon(
+                      Icons.logout,
+                      color: dangerRed,
+                    ),
+                    title: const Text(
+                      'Keluar Akun',
+                      style: TextStyle(
+                        color: dangerRed,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 40),
-            const Center(child: Text('MIND DRIJI v1.0.0 (Capstone Beta)', style: TextStyle(color: textGrey, fontSize: 12))),
-            const SizedBox(height: 24),
           ],
         ),
       ),
     );
   }
-
   Widget _buildProfileMenu(IconData icon, String title, {bool showArrow = false, Color iconColor = accentCyan, VoidCallback? onTap}) {
     return ListTile(
       leading: Icon(icon, color: iconColor),

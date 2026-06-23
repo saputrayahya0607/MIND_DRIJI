@@ -22,6 +22,8 @@ import '../modules/profile_detail/bindings/profile_detail_binding.dart';
 import '../modules/profile_detail/views/profile_detail_view.dart';
 import '../modules/register/bindings/register_binding.dart';
 import '../modules/register/views/register_view.dart';
+import '../modules/splash/bindings/splash_binding.dart';
+import '../modules/splash/views/splash_view.dart';
 
 part 'app_routes.dart';
 
@@ -29,10 +31,15 @@ class AppPages {
   AppPages._();
 
   // 🔥 FIX DI SINI
-  static const INITIAL = '/login';
+  static const INITIAL = '/splash';
 
   static final routes = [
     // Pastikan import LoginBinding dan LoginView
+    GetPage(
+      name: Routes.SPLASH,
+      page: () => const SplashView(),
+      binding: SplashBinding(),
+    ),
     GetPage(
       name: Routes.LOGIN,
       page: () => const LoginView(),

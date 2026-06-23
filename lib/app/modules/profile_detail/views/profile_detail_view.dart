@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http; 
 import 'dart:convert';
 import '../../home/controllers/home_controller.dart'; 
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 const Color bgLight = Color(0xFFF5F7FA);
 const Color cardLight = Color(0xFFFFFFFF);
@@ -22,13 +23,13 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
   // Controller Form
   late TextEditingController namaController;
   late TextEditingController noHpController;
-  final passwordController = TextEditingController(); 
+  // final passwordController = TextEditingController(); 
   
   // State variables
   DateTime tanggalLahir = DateTime(2004, 5, 16); // Nilai default jika data null
   String jenisKelamin = 'Laki-laki'; // Nilai default jika data null
   String email = 'email@domain.com'; 
-  bool isPasswordHidden = true; 
+  // bool isPasswordHidden = true; 
   bool isLoading = false; 
 
   @override
@@ -84,7 +85,7 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
   void dispose() {
     namaController.dispose();
     noHpController.dispose();
-    passwordController.dispose();
+    // passwordController.dispose();
     super.dispose();
   }
 
@@ -122,76 +123,75 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
   }
 
   Future<void> _simpanPerubahan() async {
-    if (passwordController.text.isEmpty) {
-      Get.snackbar(
-        'Aksi Ditolak', 
-        'Harap masukkan password Anda untuk memverifikasi perubahan.',
-        backgroundColor: dangerRed,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(16)
-      );
-      return;
-    }
-
-    setState(() { isLoading = true; });
+    setState(() {
+      isLoading = true;
+    });
 
     try {
-      // Ganti IP sesuai dengan lokal server Flask kamu
-      final url = Uri.parse('http://192.168.0.101:5000/api/profile/update');
+      final user =
+          Supabase.instance.client.auth.currentUser;
 
-      Map<String, dynamic> profileData = {
-        'email': email, 
-        'nama_lengkap': namaController.text.trim(),
-        'no_hp': noHpController.text.trim(),
-        'jenis_kelamin': jenisKelamin,
-        // Format tanggal agar aman masuk ke tipe data DATE di database (YYYY-MM-DD)
-        'tanggal_lahir': "${tanggalLahir.year}-${tanggalLahir.month.toString().padLeft(2, '0')}-${tanggalLahir.day.toString().padLeft(2, '0')}", 
-        'password_konfirmasi': passwordController.text, 
-      };
-
-      final response = await http.put(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(profileData),
-      );
-
-      final responseData = jsonDecode(response.body);
-
-      if (response.statusCode == 200 && responseData['status'] == 'success') {
-        // Simpan data user terbaru yang dikembalikan dari Flask ke Global Variable
-        HomeController.dataUserLogin = responseData['user']; 
-
-        Get.back(); // Kembali ke halaman utama profil
-        
-        Get.snackbar(
-          'Berhasil', 
-          responseData['message'] ?? 'Profil Anda berhasil diperbarui',
-          backgroundColor: textDark,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.BOTTOM,
-          margin: const EdgeInsets.all(16)
-        );
-      } else {
-        Get.snackbar(
-          'Gagal Update', 
-          responseData['message'] ?? 'Konfirmasi password salah.',
-          backgroundColor: dangerRed,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.BOTTOM,
-          margin: const EdgeInsets.all(16)
-        );
+      if (user == null) {
+        throw Exception('User tidak ditemukan');
       }
+
+      await Supabase.instance.client
+          .from('profiles')
+          .update({
+            'nama_lengkap':
+                namaController.text.trim(),
+            'no_hp':
+                noHpController.text.trim(),
+            'jenis_kelamin':
+                jenisKelamin,
+            'tanggal_lahir':
+                tanggalLahir
+                    .toIso8601String()
+                    .split('T')
+                    .first,
+          })
+          .eq('id', user.id);
+
+      if (HomeController.dataUserLogin != null) {
+        HomeController.dataUserLogin![
+            'nama_lengkap'] =
+            namaController.text.trim();
+
+        HomeController.dataUserLogin![
+            'no_hp'] =
+            noHpController.text.trim();
+
+        HomeController.dataUserLogin![
+            'jenis_kelamin'] =
+            jenisKelamin;
+
+        HomeController.dataUserLogin![
+            'tanggal_lahir'] =
+            tanggalLahir
+                .toIso8601String()
+                .split('T')
+                .first;
+      }
+
+      Get.back();
+
+      Get.snackbar(
+        'Berhasil',
+        'Profil berhasil diperbarui',
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
     } catch (e) {
       Get.snackbar(
-        'Error', 
-        'Tidak bisa terhubung ke server: $e',
-        backgroundColor: dangerRed,
+        'Error',
+        e.toString(),
+        backgroundColor: Colors.red,
         colorText: Colors.white,
-        snackPosition: SnackPosition.BOTTOM,
       );
     } finally {
-      setState(() { isLoading = false; });
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
@@ -294,30 +294,30 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
                   const Divider(color: bgLight, thickness: 2),
                   const SizedBox(height: 16),
                   
-                  _buildLabel('Konfirmasi Password'),
-                  TextField(
-                    controller: passwordController,
-                    obscureText: isPasswordHidden,
-                    style: const TextStyle(color: textDark, fontSize: 14),
-                    decoration: InputDecoration(
-                      hintText: 'Masukkan password saat ini',
-                      hintStyle: const TextStyle(color: textGrey, fontSize: 12),
-                      prefixIcon: const Icon(Icons.lock_outline, color: textGrey),
-                      suffixIcon: IconButton(
-                        icon: Icon(isPasswordHidden ? Icons.visibility_off : Icons.visibility, color: textGrey),
-                        onPressed: () {
-                          setState(() { isPasswordHidden = !isPasswordHidden; });
-                        },
-                      ),
-                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide(color: textGrey.withOpacity(0.3))),
-                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: accentCyan)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 32),
+            //       _buildLabel('Konfirmasi Password'),
+            //       TextField(
+            //         controller: passwordController,
+            //         obscureText: isPasswordHidden,
+            //         style: const TextStyle(color: textDark, fontSize: 14),
+            //         decoration: InputDecoration(
+            //           hintText: 'Masukkan password saat ini',
+            //           hintStyle: const TextStyle(color: textGrey, fontSize: 12),
+            //           prefixIcon: const Icon(Icons.lock_outline, color: textGrey),
+            //           suffixIcon: IconButton(
+            //             icon: Icon(isPasswordHidden ? Icons.visibility_off : Icons.visibility, color: textGrey),
+            //             onPressed: () {
+            //               setState(() { isPasswordHidden = !isPasswordHidden; });
+            //             },
+            //           ),
+            //           enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide(color: textGrey.withOpacity(0.3))),
+            //           focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: accentCyan)),
+            //           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            //         ),
+            //       ),
+            //     ],
+            //   ),
+            // ),
+            // const SizedBox(height: 32),
 
             SizedBox(
               width: double.infinity,
@@ -333,6 +333,8 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
           ],
         ),
       ),
+    ],),
+    ),
     );
   }
 
