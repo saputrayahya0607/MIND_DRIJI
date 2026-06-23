@@ -1,8 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:http/http.dart' as http;
 
+import '../../home/controllers/home_controller.dart';
 import '../../../routes/app_pages.dart';
 
 class LoginController extends GetxController {
@@ -14,8 +18,12 @@ class LoginController extends GetxController {
 
   final supabase = Supabase.instance.client;
 
+  final String baseUrl =
+      "http://10.109.50.93:5000";
+
   void togglePasswordView() {
-    isPasswordHidden.value = !isPasswordHidden.value;
+    isPasswordHidden.value =
+        !isPasswordHidden.value;
   }
 
   // ==========================
@@ -36,10 +44,32 @@ class LoginController extends GetxController {
     try {
       isLoading.value = true;
 
-      await supabase.auth.signInWithPassword(
+      final authResponse =
+          await supabase.auth.signInWithPassword(
         email: emailController.text.trim(),
         password: passwordController.text,
       );
+
+      final userId =
+          authResponse.user?.id;
+
+      if (userId != null) {
+        final profile =
+            await supabase
+                .from('profiles')
+                .select()
+                .eq('id', userId)
+                .single();
+
+        HomeController.dataUserLogin =
+            profile;
+
+        print(
+            "===== DATA PROFILE =====");
+        print(profile);
+        print(
+            "========================");
+      }
 
       Get.snackbar(
         'Berhasil',
@@ -52,7 +82,9 @@ class LoginController extends GetxController {
         const Duration(milliseconds: 1000),
       );
 
-      Get.offAllNamed(Routes.DASHBOARD);
+      Get.offAllNamed(
+        Routes.DASHBOARD,
+      );
 
       clearForm();
     } on AuthException catch (e) {
@@ -75,7 +107,7 @@ class LoginController extends GetxController {
   }
 
   // ==========================
-  // LOGIN GOOGLE POPUP ANDROID
+  // LOGIN GOOGLE
   // ==========================
   Future<void> loginWithGoogle() async {
     try {
@@ -86,24 +118,47 @@ class LoginController extends GetxController {
             '274749793163-a7i2q20ejgqs6qjr7cjtvj1ipaq0k771.apps.googleusercontent.com',
       );
 
-      final GoogleSignInAccount googleUser =
-          await GoogleSignIn.instance.authenticate();
+      final GoogleSignInAccount
+          googleUser =
+          await GoogleSignIn.instance
+              .authenticate();
 
-      final GoogleSignInAuthentication googleAuth =
+      final GoogleSignInAuthentication
+          googleAuth =
           googleUser.authentication;
 
-      final idToken = googleAuth.idToken;
+      final idToken =
+          googleAuth.idToken;
 
       if (idToken == null) {
-        throw Exception('ID Token tidak ditemukan');
+        throw Exception(
+            'ID Token tidak ditemukan');
       }
 
-      await supabase.auth.signInWithIdToken(
+      await supabase.auth
+          .signInWithIdToken(
         provider: OAuthProvider.google,
         idToken: idToken,
       );
 
-      Get.offAllNamed(Routes.DASHBOARD);
+      final user =
+          supabase.auth.currentUser;
+
+      HomeController.dataUserLogin = {
+        'id': user?.id,
+        'email': user?.email,
+        'nama_lengkap':
+            user?.userMetadata?[
+                    'full_name'] ??
+                '',
+        'no_hp': '',
+        'jenis_kelamin': '',
+        'tanggal_lahir': '',
+      };
+
+      Get.offAllNamed(
+        Routes.DASHBOARD,
+      );
     } catch (e) {
       Get.snackbar(
         'Google Login Gagal',
@@ -116,8 +171,215 @@ class LoginController extends GetxController {
     }
   }
 
+  // ==========================
+  // LUPA PASSWORD
+  // ==========================
+  void showForgotPasswordDialog() { 
+    final emailForgotController =
+        TextEditingController();
+
+    Get.defaultDialog(
+      title: "Lupa Password",
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller:
+                emailForgotController,
+            decoration:
+                const InputDecoration(
+              labelText: "Email",
+              border:
+                  OutlineInputBorder(),
+            ),
+          ),
+        ],
+      ),
+      textConfirm: "Kirim OTP",
+      textCancel: "Batal",
+      onConfirm: () async {
+        Get.back();
+
+        await sendForgotPasswordOtp(
+          emailForgotController.text
+              .trim(),
+        );
+      },
+    );
+  }
+
+  Future<void> sendForgotPasswordOtp(
+      String email) async {
+    try {
+      final response = await http.post(
+        Uri.parse(
+          '$baseUrl/api/forgot-password/send-otp',
+        ),
+        headers: {
+          'Content-Type':
+              'application/json',
+        },
+        body: jsonEncode({
+          'email': email,
+        }),
+      );
+
+      final data =
+          jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        Get.snackbar(
+          "Berhasil",
+          "OTP berhasil dikirim",
+        );
+
+        showResetPasswordDialog(
+          email,
+        );
+      } else {
+        Get.snackbar(
+          "Gagal",
+          data['message'],
+        );
+      }
+    } catch (e) {
+      Get.snackbar(
+        "Error",
+        e.toString(),
+      );
+    }
+  }
+
+  void showResetPasswordDialog(
+      String email) {
+    final otpController =
+        TextEditingController();
+
+    final newPasswordController =
+        TextEditingController();
+
+    final confirmPasswordController =
+        TextEditingController();
+
+    Get.defaultDialog(
+      title: "Reset Password",
+      content: SingleChildScrollView(
+        child: Column(
+          children: [
+            TextField(
+              controller:
+                  otpController,
+              decoration:
+                  const InputDecoration(
+                labelText: "OTP",
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller:
+                  newPasswordController,
+              obscureText: true,
+              decoration:
+                  const InputDecoration(
+                labelText:
+                    "Password Baru",
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller:
+                  confirmPasswordController,
+              obscureText: true,
+              decoration:
+                  const InputDecoration(
+                labelText:
+                    "Konfirmasi Password",
+              ),
+            ),
+          ],
+        ),
+      ),
+      textConfirm: "Simpan",
+      textCancel: "Batal",
+      onConfirm: () async {
+        if (newPasswordController
+                .text !=
+            confirmPasswordController
+                .text) {
+          Get.snackbar(
+            "Gagal",
+            "Password tidak sama",
+          );
+          return;
+        }
+
+        Get.back();
+
+        await resetPassword(
+          email,
+          otpController.text.trim(),
+          newPasswordController.text,
+        );
+      },
+    );
+  }
+
+  Future<void> resetPassword(
+    String email,
+    String otp,
+    String password,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse(
+          '$baseUrl/api/forgot-password/reset',
+        ),
+        headers: {
+          'Content-Type':
+              'application/json',
+        },
+        body: jsonEncode({
+          'email': email,
+          'otp': otp,
+          'password': password,
+        }),
+      );
+
+      final data =
+          jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        Get.snackbar(
+          "Berhasil",
+          "Password berhasil diubah",
+          backgroundColor:
+              Colors.green,
+          colorText: Colors.white,
+        );
+      } else {
+        Get.snackbar(
+          "Gagal",
+          data['message'],
+          backgroundColor:
+              Colors.red,
+          colorText: Colors.white,
+        );
+      }
+    } catch (e) {
+      Get.snackbar(
+        "Error",
+        e.toString(),
+      );
+    }
+  }
+
+  // ==========================
+  // NAVIGASI
+  // ==========================
   void goToRegister() {
-    Get.toNamed(Routes.REGISTER);
+    Get.toNamed(
+      Routes.REGISTER,
+    );
   }
 
   void clearForm() {

@@ -1,5 +1,7 @@
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../home/controllers/home_controller.dart';
+import '../../../routes/app_pages.dart';
 
 class ProfileController extends GetxController {
 final supabase = Supabase.instance.client;
@@ -35,6 +37,10 @@ if (user != null) {
 }
 
 Future<void> logout() async {
-await supabase.auth.signOut();
+  await Supabase.instance.client.auth.signOut();
+
+  HomeController.dataUserLogin = null;
+
+  Get.offAllNamed(Routes.LOGIN);
 }
 }

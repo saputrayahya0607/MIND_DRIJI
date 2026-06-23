@@ -37,7 +37,7 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
     super.initState();
     
     // 1. Tentukan nilai default/fallback jika data di DB memang masih kosong (null)
-    String initialName = 'Saputra Aditama'; 
+    String initialName = '';
     String initialHp = ''; // Kosongkan saja agar user bisa isi sendiri nanti
     jenisKelamin = 'Laki-laki';
     tanggalLahir = DateTime(2000, 1, 1); // Default awal tahun 2000

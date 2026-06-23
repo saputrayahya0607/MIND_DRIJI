@@ -114,7 +114,9 @@ class LoginView extends GetView<LoginController> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      loginCtrl.showForgotPasswordDialog();
+                    },
                     child: const Text(
                       'Lupa Password?',
                       style: TextStyle(color: textGrey),

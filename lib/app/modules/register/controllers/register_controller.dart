@@ -99,7 +99,11 @@ return;
       colorText: Colors.white,
     );
   }
-} catch (e) {
+} catch (e, stackTrace) {
+  print("===== REGISTER ERROR =====");
+  print(e);
+  print(stackTrace);
+
   Get.snackbar(
     'Error',
     e.toString(),
