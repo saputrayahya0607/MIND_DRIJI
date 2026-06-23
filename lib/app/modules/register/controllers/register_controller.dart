@@ -26,7 +26,7 @@ final supabase = Supabase.instance.client;
 
 // GANTI DENGAN IP FLASK KAMU
 final String baseUrl =
-"http://10.33.253.128:5000";
+"http://192.168.0.121:5000";
 
 void togglePasswordView() {
 isPasswordHidden.value =

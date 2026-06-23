@@ -49,7 +49,7 @@ class MonitoringController extends GetxController {
   final Map<String, double>                      _sotCache       = {};
 
   static const _platformMethod = MethodChannel('minddriji/apps');
-  static const String baseUrl = 'http://10.33.253.128:5000';
+  static const String baseUrl = 'http://192.168.0.121:5000';
 
   DateTime? _lastUploadTime;
   final int _uploadCooldownMinutes = 15; // Jeda 15 menit antar upload

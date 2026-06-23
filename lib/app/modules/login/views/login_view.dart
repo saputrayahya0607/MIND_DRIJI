@@ -9,11 +9,19 @@ const Color textDark = Color(0xFF2D3142);
 const Color textGrey = Color(0xFF9094A6); 
 const Color accentCyan = Color(0xFF00BFA5); 
 
+// Tetap gunakan GetView sesuai standar GetX arsitektur kamu
 class LoginView extends GetView<LoginController> {
   const LoginView({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // 🛠️ JARING PENGAMAN GETX: 
+    // Jika LoginController terlanjur terhapus oleh 'Get.offAllNamed', 
+    // baris ini akan otomatis melahirkan controller baru yang fresh, anti-disposed!
+    final loginCtrl = Get.isRegistered<LoginController>() 
+        ? Get.find<LoginController>() 
+        : Get.put(LoginController());
+
     return Scaffold(
       backgroundColor: bgLight, 
       body: Center(
@@ -54,7 +62,7 @@ class LoginView extends GetView<LoginController> {
 
                 // Form Email
                 TextField(
-                  controller: controller.emailController, 
+                  controller: loginCtrl.emailController, // Menggunakan jaring pengaman loginCtrl
                   style: const TextStyle(color: textDark), 
                   keyboardType: TextInputType.emailAddress,
                   decoration: InputDecoration(
@@ -75,8 +83,8 @@ class LoginView extends GetView<LoginController> {
 
                 // Form Password
                 Obx(() => TextField(
-                  controller: controller.passwordController, 
-                  obscureText: controller.isPasswordHidden.value,
+                  controller: loginCtrl.passwordController, // Menggunakan jaring pengaman loginCtrl
+                  obscureText: loginCtrl.isPasswordHidden.value,
                   style: const TextStyle(color: textDark), 
                   decoration: InputDecoration(
                     labelText: 'Password',
@@ -84,12 +92,12 @@ class LoginView extends GetView<LoginController> {
                     prefixIcon: const Icon(Icons.lock_outline, color: textGrey),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        controller.isPasswordHidden.value 
+                        loginCtrl.isPasswordHidden.value 
                             ? Icons.visibility_off 
                             : Icons.visibility,
                         color: textGrey,
                       ),
-                      onPressed: controller.togglePasswordView,
+                      onPressed: loginCtrl.togglePasswordView,
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
@@ -131,18 +139,18 @@ class LoginView extends GetView<LoginController> {
                       elevation: 5,
                       shadowColor: accentCyan.withValues(alpha: 0.3), 
                     ),
-                    onPressed: controller.isLoading.value ? null : () => controller.login(),
+                    onPressed: loginCtrl.isLoading.value ? null : () => loginCtrl.login(),
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
                         Opacity(
-                          opacity: controller.isLoading.value ? 0.3 : 1.0,
+                          opacity: loginCtrl.isLoading.value ? 0.3 : 1.0,
                           child: const Text(
                             'Masuk',
                             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                           ),
                         ),
-                        if (controller.isLoading.value)
+                        if (loginCtrl.isLoading.value)
                           const SizedBox(
                             height: 20,
                             width: 20,
@@ -168,7 +176,7 @@ class LoginView extends GetView<LoginController> {
                         borderRadius: BorderRadius.circular(15),
                       ),
                     ),
-                    onPressed: controller.loginWithGoogle,
+                    onPressed: loginCtrl.loginWithGoogle,
                     icon: const Icon(Icons.g_mobiledata, size: 30, color: textDark), 
                     label: const Text(
                       'Lanjutkan dengan Google',
@@ -184,7 +192,7 @@ class LoginView extends GetView<LoginController> {
                   children: [
                     const Text('Belum punya akun? ', style: TextStyle(color: textGrey)),
                     GestureDetector(
-                      onTap: controller.goToRegister,
+                      onTap: loginCtrl.goToRegister,
                       child: const Text(
                         'Daftar',
                         style: TextStyle(
