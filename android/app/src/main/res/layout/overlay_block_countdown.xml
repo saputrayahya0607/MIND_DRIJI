@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:background="#E61A1A2E"
+    android:padding="32dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="🔒"
+        android:textSize="56sp"
+        android:layout_marginBottom="16dp"/>
+
+    <TextView
+        android:id="@+id/tv_blocked_app"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="TikTok"
+        android:textColor="#FFFFFF"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="4dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="sedang dijeda oleh MIND DRIJI"
+        android:textColor="#AAAACC"
+        android:textSize="14sp"
+        android:layout_marginBottom="32dp"/>
+
+    <!-- Countdown besar -->
+    <TextView
+        android:id="@+id/tv_countdown"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="29:59"
+        android:textColor="#FFFFFF"
+        android:textSize="64sp"
+        android:textStyle="bold"
+        android:fontFamily="monospace"
+        android:layout_marginBottom="8dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="sisa waktu jeda"
+        android:textColor="#AAAACC"
+        android:textSize="13sp"
+        android:layout_marginBottom="48dp"/>
+
+    <!-- Tombol ke MindDriji -->
+    <Button
+        android:id="@+id/btn_open_minddriji"
+        android:layout_width="260dp"
+        android:layout_height="52dp"
+        android:text="Buka MIND DRIJI"
+        android:textColor="#FFFFFF"
+        android:backgroundTint="#7C4DFF"
+        android:stateListAnimator="@null"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Kamu bisa mengakhiri jeda dari sana"
+        android:textColor="#666688"
+        android:textSize="12sp"
+        android:layout_marginTop="10dp"/>
+
+</LinearLayout>

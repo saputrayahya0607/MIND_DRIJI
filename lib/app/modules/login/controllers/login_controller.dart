@@ -19,7 +19,7 @@ class LoginController extends GetxController {
   final supabase = Supabase.instance.client;
 
   final String baseUrl =
-      "http://192.168.0.121:5000";
+      "http://10.33.253.128:5000";
 
   void togglePasswordView() {
     isPasswordHidden.value =

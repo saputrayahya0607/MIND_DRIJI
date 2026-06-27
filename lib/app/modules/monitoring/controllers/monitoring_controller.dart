@@ -27,6 +27,7 @@ class MonitoringController extends GetxController {
   // ── Observable state ────────────────────────────────────────
   var selectedFilter   = 'Minggu'.obs;
   var totalScreenTime  = '0j 0m'.obs;
+  var todayScreenTime  = '0j 0m'.obs;
   var averageTime      = '0j 0m'.obs;
 
   var chartData        = <double>[0, 0, 0, 0, 0, 0, 0].obs;
@@ -49,7 +50,7 @@ class MonitoringController extends GetxController {
   final Map<String, double>                      _sotCache       = {};
 
   static const _platformMethod = MethodChannel('minddriji/apps');
-  static const String baseUrl = 'http://192.168.0.121:5000';
+  static const String baseUrl = 'http://10.33.253.128:5000';
 
   DateTime? _lastUploadTime;
   final int _uploadCooldownMinutes = 15; // Jeda 15 menit antar upload
@@ -229,6 +230,15 @@ class MonitoringController extends GetxController {
         _buildChart(sotPerPeriode, periods, now, filter);
         await _fetchAndScaleApps(periods.first.start, periods.last.end.isAfter(now) ? now : periods.last.end, totalMonthMenit);
       }
+
+      // 💡 FIX: Spasi di nama variabel awalHariIni sudah dibersihkan
+      final DateTime skrg = DateTime.now();
+      final DateTime awalHariIni = DateTime(skrg.year, skrg.month, skrg.day);
+      final int menitHariIni = await _getRealScreenOnTime(awalHariIni, skrg);
+
+      final int j = menitHariIni ~/ 60;
+      final int m = menitHariIni % 60;
+      todayScreenTime.value = '${j}j ${m}m';
 
     } catch (e) {
       debugPrint("fetchRealUsageData error: $e");
