@@ -2,6 +2,8 @@ import 'package:get/get.dart';
 
 import '../modules/app_block_setting/bindings/app_block_setting_binding.dart';
 import '../modules/app_block_setting/views/app_block_setting_view.dart';
+import '../modules/article_detail/bindings/article_detail_binding.dart';
+import '../modules/article_detail/views/article_detail_view.dart';
 import '../modules/dashboard/bindings/dashboard_binding.dart';
 import '../modules/dashboard/views/dashboard_view.dart';
 import '../modules/eye_monitoring/bindings/eye_monitoring_binding.dart';
@@ -94,6 +96,11 @@ class AppPages {
       name: _Paths.PROFILE_DETAIL,
       page: () => const ProfileDetailView(),
       binding: ProfileDetailBinding(),
+    ),
+    GetPage(
+      name: _Paths.ARTICLE_DETAIL,
+      page: () => const ArticleDetailView(),
+      binding: ArticleDetailBinding(),
     ),
   ];
 }

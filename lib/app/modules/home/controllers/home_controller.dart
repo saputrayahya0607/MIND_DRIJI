@@ -1,11 +1,12 @@
+import 'package:flutter/material.dart'; 
 import 'package:flutter/widgets.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:usage_stats/usage_stats.dart';
 import 'dart:async';
+import 'package:permission_handler/permission_handler.dart';
 
-// 🟡 PASTIKAN: Sesuaikan path import ini dengan nama package dan folder proyekmu
-// import 'package:nama_project_kamu/app/modules/monitoring/controllers/monitoring_controller.dart';
+// PASTIKAN: Sesuaikan path import ini dengan nama package dan folder proyekmu
 import 'package:mind_driji/app/modules/monitoring/controllers/monitoring_controller.dart'; 
 
 class HomeController extends GetxController with WidgetsBindingObserver {
@@ -18,21 +19,22 @@ class HomeController extends GetxController with WidgetsBindingObserver {
   // =========================
 
   static Map<String, dynamic>? dataUserLogin;
-  var namaUser = 'Saputra'.obs;
+  var namaUser = 'User'.obs;
 
   // =========================
   // HEALTH SCORE & DIMENSI DATA
   // =========================
 
-  var healthScore = 72.obs; // Variabel utama yang menampung rumus gabungan AI
-  var screenTime = '0j 0m'.obs; // Diubah defaultnya ke 0j 0m karena nanti live dari MonitoringController
+  var healthScore = 100.obs; // Mulai dari 100 bersih sebelum kalkulasi turun
+  var screenTime = '0j 0m'.obs; 
   var doomscrollStatus = 'Rendah'.obs; 
-  var eyeCondition = 'Lelah'.obs;
+  var eyeCondition = 'Normal'.obs; 
+  final eyeFatigueCount = 0.obs;
 
   // Skor mentah (0-100) tiap dimensi untuk kebutuhan kalkulasi rumus berbobot
-  var screenTimeScore = 100.obs;     // Dimulai dari angka aman (100)
-  var doomscrollScore = 95.obs;      // Nilai dasar doomscrolling (dimulai dari aman: 95)
-  var eyeMonitoringScore = 65.obs;   // Nilai dasar monitoring mata
+  var screenTimeScore = 100.obs;     
+  var doomscrollScore = 0.obs;       // Diubah ke 0 agar mulai dari kondisi bersih/aman
+  var eyeMonitoringScore = 100.obs;   // Diubah ke 100 sebagai skor awal kondisi mata prima
 
   // =========================
   // MONITORING AKTIVITAS
@@ -51,19 +53,6 @@ class HomeController extends GetxController with WidgetsBindingObserver {
   // Status label untuk ditampilkan di UI
   var statusOverlay       = "Belum diizinkan".obs;
   var statusAccessibility = "Belum diaktifkan".obs;
-
-  // =========================
-  // NOTIFIKASI CERDAS
-  // =========================
-
-  var isSmartNotifActive = false.obs;
-  var statusSmartNotif   = "Menunggu diaktifkan".obs;
-
-  // =========================
-  // HEALTH INSIGHT
-  // =========================
-
-  var isHealthInsightActive = true.obs;
 
   // =========================
   // EYE MONITORING & INTERACTION
@@ -97,16 +86,20 @@ class HomeController extends GetxController with WidgetsBindingObserver {
     checkUsagePermission();
     checkAllPermissions(); 
     
-    // 🟡 TASK 3.1: Aktifkan mesin pengetuk pintu Kotlin (Polling 3 detik sekali)
+    // DAFTARKAN LISTENER STREAM MATA DARI KOTLIN
+    _initEyeStatusStreamListener();
+
+    // Aktifkan mesin pengetuk pintu Kotlin (Polling 3 detik sekali)
     _startLiveDoomscrollPolling();
 
-    // 🟡 INTEGRASI: Dapatkan data live Screen Time dari MonitoringController
+    // INTEGRASI: Dapatkan data live Screen Time dari MonitoringController
     _sinkronisasiDenganMonitoring();
   }
 
   @override
   void onReady() {
     super.onReady();
+    updateNamaUser();
     checkUsagePermission();
     checkAllPermissions();
   }
@@ -130,6 +123,10 @@ class HomeController extends GetxController with WidgetsBindingObserver {
     if (state == AppLifecycleState.resumed) {
       checkUsagePermission();
       checkAllPermissions();
+      
+      // 🔥 OPTIMASI: Langsung jemput data ke Kotlin begitu aplikasi dibuka, 
+      // tanpa perlu menunggu ketukan timer 3 detik berikutnya.
+      _updateLiveDoomscrollDataOnce();
     }
   }
 
@@ -202,7 +199,7 @@ class HomeController extends GetxController with WidgetsBindingObserver {
       bool granted = await UsageStats.checkUsagePermission() ?? false;
       hasUsagePermission.value = granted;
       statusActivityLooping.value =
-          granted ? "Monitoring Aktif" : "Ketuk untuk memberikan izin akses";
+          granted ? "Monitoring Active" : "Ketuk untuk memberikan izin akses";
     } catch (e) {
       statusActivityLooping.value = "Gagal memeriksa izin";
     }
@@ -220,37 +217,54 @@ class HomeController extends GetxController with WidgetsBindingObserver {
     }
   }
 
+  void updateNamaUser() {
+    if (dataUserLogin != null && dataUserLogin!['nama_lengkap'] != null) {
+      namaUser.value = dataUserLogin!['nama_lengkap'].toString();
+    } else if (Get.arguments != null && Get.arguments['nama_lengkap'] != null) {
+      namaUser.value = Get.arguments['nama_lengkap'].toString();
+    }
+  }
+
   // =========================
   // INTEGRASI DATA LIVE DOOMSCROLLING
   // =========================
 
   void _startLiveDoomscrollPolling() {
-    _liveDataPollingTimer = Timer.periodic(const Duration(seconds: 3), (timer) async {
-      if (hasAccessibilityPermission.value) {
-        try {
-          final Map<dynamic, dynamic>? liveData = 
-              await _platformChannel.invokeMethod('getLiveDoomscrollData');
+    // Jalankan pengambilan data pertama kali saat fungsi dipanggil
+    _updateLiveDoomscrollDataOnce();
 
-          if (liveData != null) {
-            doomscrollStatus.value = liveData['status'] ?? 'Rendah';
-            doomscrollScore.value = liveData['score'] ?? 95;
-
-            // Hitung ulang skor kesehatan digital setiap kali ada perubahan data doomscrolling
-            _hitungTotalDigitalHealthScore();
-          }
-        } catch (e) {
-          print("Pipa data MethodChannel getLiveDoomscrollData terputus: $e");
-        }
-      }
+    // Jalankan loop per 3 detik
+    _liveDataPollingTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      _updateLiveDoomscrollDataOnce();
     });
   }
 
-  // 🟡 SINKRONISASI OTOMATIS: Mengikat data dari MonitoringController secara realtime
+  // 🔥 FUNGSI MANDIRI: Dipecah agar bisa dipanggil oleh Timer maupun Lifecycle Resumed
+  Future<void> _updateLiveDoomscrollDataOnce() async {
+    if (hasAccessibilityPermission.value) {
+      try {
+        // Mengetuk pintu native Android Kotlin untuk meminta data terbaru
+        final Map<dynamic, dynamic>? liveData = 
+            await _platformChannel.invokeMethod('getLiveDoomscrollData');
+
+        if (liveData != null) {
+          doomscrollStatus.value = liveData['status'] ?? 'Rendah';
+          doomscrollScore.value = liveData['score'] ?? 0;
+
+          // Hitung ulang skor kesehatan digital setiap kali ada perubahan data doomscrolling
+          _hitungTotalDigitalHealthScore();
+        }
+      } catch (e) {
+        print("Pipa data MethodChannel getLiveDoomscrollData terputus: $e");
+      }
+    }
+  }
+
+  // SINKRONISASI OTOMATIS: Mengikat data dari MonitoringController secara realtime
   void _sinkronisasiDenganMonitoring() {
     try {
       final monitoringCtrl = Get.find<MonitoringController>();
 
-      // 💡 UBAH DI SINI: Dengarkan 'todayScreenTime', bukan 'totalScreenTime'
       ever(monitoringCtrl.todayScreenTime, (String SOTTerbaru) {
         screenTime.value = SOTTerbaru;
 
@@ -285,67 +299,104 @@ class HomeController extends GetxController with WidgetsBindingObserver {
     return totalMinutes;
   }
 
-  // 🟡 TASK 3.3: Rumus Gabungan Digital Health Score Berbobot
+  // Rumus Gabungan Digital Health Score Berbobot
   void _hitungTotalDigitalHealthScore() {
     // Rumus Bobot Rasional: (40% ScreenTime) + (30% Doomscrolling) + (30% EyeMonitoring)
+    // Untuk Nilai Doomscrolling, karena 100 adalah kondisi terburuk (parah), kita balik logikanya (100 - score)
+    int doomscrollInverseScore = 100 - doomscrollScore.value;
+
     double hasilKalkulasi = (0.40 * screenTimeScore.value) + 
-                            (0.30 * doomscrollScore.value) + 
+                            (0.30 * doomscrollInverseScore) + 
                             (0.30 * eyeMonitoringScore.value);
 
     // Update nilai utama healthScore dengan pembulatan bilangan bulat terdekat
-    healthScore.value = hasilKalkulasi.round();
+    healthScore.value = hasilKalkulasi.round().clamp(0, 100);
   }
 
   // =========================
-  // HEALTH INSIGHT
+  // EYE MONITORING SYSTEM (MEDIAPIPE STREAM INTEGRATION)
   // =========================
 
-  void toggleHealthInsight(bool value) => isHealthInsightActive.value = value;
+  void _initEyeStatusStreamListener() {
+    _platformChannel.setMethodCallHandler((MethodCall call) async {
+      if (call.method == "onEyeStatusUpdate") {
+        String statusMasuk = call.arguments ?? "Normal";
 
-  // =========================
-  // NOTIFIKASI CERDAS
-  // =========================
+        statusLooping.value = "Mengamati: $statusMasuk";
 
-  void toggleSmartNotif(bool value) {
-    isSmartNotifActive.value = value;
-    if (value) {
-      statusSmartNotif.value = "AI Engine siap mengirim peringatan real-time.";
-      Get.snackbar(
-        'Notifikasi Aktif',
-        'Anda akan menerima peringatan jika terdeteksi kelelahan mata.',
-        snackPosition: SnackPosition.TOP,
-      );
-    } else {
-      statusSmartNotif.value = "Sistem Dimatikan";
-    }
+        // Jangan proses jika status tidak berubah
+        if (eyeCondition.value == statusMasuk) return;
+
+        eyeCondition.value = statusMasuk;
+
+        // Jika AI mendeteksi mata lelah
+        if (statusMasuk == "Lelah") {
+
+          // Tambahkan jumlah deteksi mata lelah
+          eyeFatigueCount.value++;
+
+          eyeMonitoringScore.value =
+              (eyeMonitoringScore.value - 8).clamp(10, 100);
+
+          _hitungTotalDigitalHealthScore();
+
+          Get.snackbar(
+            'Mata Terdeteksi Lelah! ⚠️',
+            'AI mendeteksi mata Anda mulai sayu/lelah akibat doomscrolling. Istirahat sejenak, Boss!',
+            backgroundColor: Colors.redAccent,
+            colorText: Colors.white,
+            snackPosition: SnackPosition.TOP,
+            duration: const Duration(seconds: 4),
+          );
+        }
+
+        // Jika mata kembali normal
+        else if (statusMasuk == "Normal") {
+
+          eyeMonitoringScore.value =
+              (eyeMonitoringScore.value + 2).clamp(10, 100);
+
+          _hitungTotalDigitalHealthScore();
+        }
+      }
+    });
   }
 
-  // =========================
-  // EYE MONITORING SYSTEM
-  // =========================
-
-  void toggleEyeMonitor(bool value) {
-    isEyeMonitorActive.value = value;
+  void toggleEyeMonitor(bool value) async {
     if (value) {
-      statusLooping.value = "Sistem Aktif";
-      _startEyeMonitoringLoop();
+      var status = await Permission.camera.status;
+      if (!status.isGranted) {
+        status = await Permission.camera.request();
+      }
+
+      if (status.isGranted) {
+        isEyeMonitorActive.value = true;
+        statusLooping.value = "Memulai deteksi AI Latar Belakang...";
+        
+        try {
+          final String responNative = await _platformChannel.invokeMethod('startEyeCapture');
+          print("Respons Native Android: $responNative"); 
+        } catch (e) {
+          print("Gagal menyalakan service kamera: $e");
+          statusLooping.value = "Gagal terhubung ke background service";
+        }
+        
+      } else {
+        isEyeMonitorActive.value = false;
+      }
     } else {
+      isEyeMonitorActive.value = false;
       statusLooping.value = "Sistem Dimatikan";
+      try {
+        await _platformChannel.invokeMethod('stopEyeCapture');
+      } catch (e) {
+        print("Gagal mematikan background service: $e");
+      }
     }
   }
 
   void onUserInteract() {
     print("User berinteraksi dengan UI MIND DRIJI");
     lastInteractionTime.value = DateTime.now();
-  }
-
-  Future<void> _startEyeMonitoringLoop() async {
-    while (isEyeMonitorActive.value) {
-      statusLooping.value = "Menganalisis wajah (10 detik)...";
-      await Future.delayed(const Duration(seconds: 10));
-      if (!isEyeMonitorActive.value) break;
-      statusLooping.value = "Jeda (Mode Hemat Baterai)";
-      await Future.delayed(const Duration(minutes: 5));
-    }
   }
 }

@@ -25,14 +25,13 @@ class MainActivity : FlutterActivity() {
     private val CHANNEL_APPS = "minddriji/apps"
     private val CHANNEL_INTENT = "minddriji/intent"
     private var triggerPopup = false
+    private var channelIntent: MethodChannel? = null
 
-    // 1. PANGGIL PERIZINAN SAAT PERTAMA KALI DIKREASI
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestOverlayPermission()
     }
 
-    // Tangkap data jika aplikasi di background dipaksa naik ke layar (Hot Resume)
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
@@ -47,7 +46,6 @@ class MainActivity : FlutterActivity() {
                 Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                 Uri.parse("package:$packageName")
             )
-            // Menggunakan startActivityForResult agar terdokumentasi dengan REQUEST_OVERLAY_CODE
             startActivityForResult(intent, REQUEST_OVERLAY_CODE)
         }
     }
@@ -55,14 +53,10 @@ class MainActivity : FlutterActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
 
-        // Tangkap data jika aplikasi mati total lalu dinyalakan mendadak (Cold Start)
         if (intent?.getBooleanExtra("trigger_popup", false) == true) {
             triggerPopup = true
         }
 
-        // ==========================================
-        // HANDLER CHANNEL 1: FITUR BAWAAN
-        // ==========================================
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL_APPS)
             .setMethodCallHandler { call, result ->
                 when (call.method) {
@@ -78,7 +72,7 @@ class MainActivity : FlutterActivity() {
                             val appName = pm.getApplicationLabel(appInfo).toString()
                             result.success(appName)
                         } catch (e: Exception) {
-                            result.success(packageName) // Fallback kembalikan package name jika gagal
+                            result.success(packageName)
                         }
                     }
                     "getScreenOnTime" -> {
@@ -91,18 +85,40 @@ class MainActivity : FlutterActivity() {
                 }
             }
 
-        // ==========================================
-        // HANDLER CHANNEL 2: FITUR BLOKIR & DOOMSCROLLING
-        // ==========================================
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL_INTENT)
-            .setMethodCallHandler { call, result ->
+        channelIntent = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL_INTENT)
+        channelIntent?.setMethodCallHandler { call, result ->
                 when (call.method) {
+                    // 🟢 SEKARANG MENYALAKAN BACKGROUND SERVICE RESMI
+                    "startEyeCapture" -> {
+                        if (EyeMonitoringService.isServiceRunning) {
+                            result.success("Kamera Sudah Berjalan di Background")
+                            return@setMethodCallHandler
+                        }
+                        
+                        EyeMonitoringService.channelIntent = channelIntent
+                        val serviceIntent = Intent(this@MainActivity, EyeMonitoringService::class.java)
+                        
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            startForegroundService(serviceIntent)
+                        } else {
+                            startService(serviceIntent)
+                        }
+                        
+                        result.success("Streaming_Background_Started") 
+                    }
+
+                    // 🟢 KONTROL TAMBAHAN: Agar Flutter bisa mematikan kamera saat saklar di-off
+                    "stopEyeCapture" -> {
+                        val serviceIntent = Intent(this@MainActivity, EyeMonitoringService::class.java)
+                        stopService(serviceIntent)
+                        result.success("Streaming_Background_Stopped")
+                    }
+
                     "checkIntentExtra" -> {
                         result.success(triggerPopup)
                         triggerPopup = false
                     }
 
-                    // ── Accessibility ──
                     "isAccessibilityEnabled" -> {
                         result.success(isAccessibilityServiceEnabled())
                     }
@@ -113,7 +129,6 @@ class MainActivity : FlutterActivity() {
                         result.success(true)
                     }
 
-                    // ── Overlay ──
                     "checkOverlayPermission" -> {
                         result.success(Settings.canDrawOverlays(this))
                     }
@@ -129,21 +144,16 @@ class MainActivity : FlutterActivity() {
                     }
 
                     "getBlockStatus" -> {
-                        // Mengambil Map berisi data spesifik, contoh: {"com.instagram.android": 900000}
                         val blockedMap = BlockPreferenceManager.getBlockedPackagesMap(this)
                         result.success(blockedMap)
                     }
                     
                     "clearBlock" -> {
-                        // Ambil parameter nama package yang dikirim dari Flutter
                         val packageName = call.argument<String>("packageName")
-                        
                         if (packageName != null) {
-                            // 🔥 HAPUS HANYA UNTUK APLIKASI INI SAJA
                             BlockPreferenceManager.clearBlockForPackage(this, packageName)
                             Log.i("MIND_DRIJI", "Blokir manual dibuka untuk: $packageName")
                         } else {
-                            // Jalur aman: Jika dari flutter tidak mengirim nama package, hapus semua
                             BlockPreferenceManager.clearBlock(this)
                             Log.i("MIND_DRIJI", "Semua blokir dihapus secara global")
                         }
@@ -151,13 +161,10 @@ class MainActivity : FlutterActivity() {
                     }
 
                     "getLiveDoomscrollData" -> {
-                        // 💡 SOLUSI: Menambahkan <String, Any> secara eksplisit agar tipe data terdeteksi sempurna
                         val dataData = mapOf<String, Any>(
                             "status" to DoomscrollAccessibilityService.liveStatus,
                             "score" to DoomscrollAccessibilityService.doomscrollScore
                         )
-                        
-                        // Kirim kembali hasil ke Flutter
                         result.success(dataData)
                     }
 
@@ -166,13 +173,10 @@ class MainActivity : FlutterActivity() {
             }
     }
 
-    // Pembaca sensor interaksi layar Android dengan proteksi Crash
     private fun getScreenOnTime(context: Context, startTime: Long, endTime: Long): Long {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return 0L
-        
         var totalScreenOnTime = 0L
         var screenOnTimestamp = 0L
-        
         try {
             val usageStatsManager = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
             val events = usageStatsManager.queryEvents(startTime, endTime)
@@ -180,36 +184,32 @@ class MainActivity : FlutterActivity() {
 
             while (events.hasNextEvent()) {
                 events.getNextEvent(event)
-                if (event.eventType == 15) { // SCREEN_INTERACTIVE
+                if (event.eventType == 15) { 
                     screenOnTimestamp = event.timeStamp
-                } else if (event.eventType == 16) { // SCREEN_NON_INTERACTIVE
+                } else if (event.eventType == 16) { 
                     if (screenOnTimestamp != 0L) {
                         totalScreenOnTime += (event.timeStamp - screenOnTimestamp)
                         screenOnTimestamp = 0L
                     }
                 }
             }
-            
             if (screenOnTimestamp != 0L && endTime > screenOnTimestamp) {
                 totalScreenOnTime += (endTime - screenOnTimestamp)
             }
         } catch (e: SecurityException) {
-            Log.e("MIND_DRIJI", "Izin PACKAGE_USAGE_STATS belum diberikan oleh user: ${e.message}")
-            return -1L // Kembalikan -1 sebagai kode di Flutter bahwa izin belum aktif
+            return -1L 
         } catch (e: Exception) {
-            Log.e("MIND_DRIJI", "Gagal mengambil data SOT: ${e.message}")
             return 0L
         }
-
         return totalScreenOnTime / 1000 / 60
     }
 
-    // Memeriksa status Accessibility Service
     private fun isAccessibilityServiceEnabled(): Boolean {
         val expectedComponentName = ComponentName(this, DoomscrollAccessibilityService::class.java)
         val enabledServicesSetting = Settings.Secure.getString(contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES) ?: return false
         val colonSplitter = TextUtils.SimpleStringSplitter(':')
-        colonSplitter.setString(enabledServicesSetting)
+        val colonSplitterString: String = enabledServicesSetting
+        colonSplitter.setString(colonSplitterString)
         while (colonSplitter.hasNext()) {
             val componentNameString = colonSplitter.next()
             val enabledService = ComponentName.unflattenFromString(componentNameString)

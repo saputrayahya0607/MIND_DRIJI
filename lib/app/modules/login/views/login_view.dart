@@ -45,7 +45,7 @@ class LoginView extends GetView<LoginController> {
               children: [
                 // Logo & Header
                 Image.asset(
-                  'assets/images/Logo Mind Driji.png',
+                  'assets/images/logo_mind_driji.png',
                   width: 120,
                 ),
                 const SizedBox(height: 16),

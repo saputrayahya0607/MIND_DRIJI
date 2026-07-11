@@ -26,7 +26,7 @@ final supabase = Supabase.instance.client;
 
 // GANTI DENGAN IP FLASK KAMU
 final String baseUrl =
-"http://10.33.253.128:5000";
+"https://yarn-uncurled-arguable.ngrok-free.dev";
 
 void togglePasswordView() {
 isPasswordHidden.value =

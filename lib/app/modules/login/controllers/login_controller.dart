@@ -19,11 +19,53 @@ class LoginController extends GetxController {
   final supabase = Supabase.instance.client;
 
   final String baseUrl =
-      "http://10.33.253.128:5000";
+      "https://yarn-uncurled-arguable.ngrok-free.dev";
 
   void togglePasswordView() {
     isPasswordHidden.value =
         !isPasswordHidden.value;
+  }
+
+  // 🟡 TAMBAHKAN FUNGSI INI UNTUK AUTO-FILL DATA SAAT AUTO-LOGIN
+  @override
+  void onInit() {
+    super.onInit();
+    fetchProfileForAutoLogin();
+  }
+
+  Future<void> fetchProfileForAutoLogin() async {
+    try {
+      final currentUser = supabase.auth.currentUser;
+      // Jika ternyata aplikasi di-auto login dan currentUser ada isinya
+      if (currentUser != null && HomeController.dataUserLogin == null) {
+        // 1. Cek dulu apakah dia login pakai Google atau Email
+        final isGoogle = currentUser.appMetadata['provider'] == 'google';
+
+        if (isGoogle) {
+          // Jika user Google, langsung set datanya dari metadata
+          HomeController.dataUserLogin = {
+            'id': currentUser.id,
+            'email': currentUser.email,
+            'nama_lengkap': currentUser.userMetadata?['full_name'] ?? '',
+            'no_hp': '',
+            'jenis_kelamin': '',
+            'tanggal_lahir': '',
+          };
+        } else {
+          // Jika user Email, ambil datanya langsung dari tabel 'profiles' Supabase
+          final profile = await supabase
+              .from('profiles')
+              .select()
+              .eq('id', currentUser.id)
+              .single();
+
+          HomeController.dataUserLogin = profile;
+        }
+        print("⚡ [Auto-Login] Data profile berhasil dimuat otomatis!");
+      }
+    } catch (e) {
+      print("❌ [Auto-Login] Gagal memuat profile otomatis: $e");
+    }
   }
 
   // ==========================
@@ -69,6 +111,11 @@ class LoginController extends GetxController {
         print(profile);
         print(
             "========================");
+      }
+      
+      // 🟡 SUNTIKKAN BARIS INI: Paksa Home update namanya setelah login email sukses!
+      if (Get.isRegistered<HomeController>()) {
+        Get.find<HomeController>().updateNamaUser();
       }
 
       Get.snackbar(
@@ -118,43 +165,39 @@ class LoginController extends GetxController {
             '274749793163-a7i2q20ejgqs6qjr7cjtvj1ipaq0k771.apps.googleusercontent.com',
       );
 
-      final GoogleSignInAccount
-          googleUser =
-          await GoogleSignIn.instance
-              .authenticate();
+      // 🟡 KEMBALI KE KODE ASLI KAMU (AMAN DARI ERROR)
+      final GoogleSignInAccount googleUser =
+          await GoogleSignIn.instance.authenticate();
 
-      final GoogleSignInAuthentication
-          googleAuth =
+      final GoogleSignInAuthentication googleAuth =
           googleUser.authentication;
 
-      final idToken =
-          googleAuth.idToken;
+      final idToken = googleAuth.idToken;
 
       if (idToken == null) {
-        throw Exception(
-            'ID Token tidak ditemukan');
+        throw Exception('ID Token tidak ditemukan');
       }
 
-      await supabase.auth
-          .signInWithIdToken(
+      await supabase.auth.signInWithIdToken(
         provider: OAuthProvider.google,
         idToken: idToken,
       );
 
-      final user =
-          supabase.auth.currentUser;
+      final user = supabase.auth.currentUser;
 
       HomeController.dataUserLogin = {
         'id': user?.id,
         'email': user?.email,
-        'nama_lengkap':
-            user?.userMetadata?[
-                    'full_name'] ??
-                '',
+        'nama_lengkap': user?.userMetadata?['full_name'] ?? '',
         'no_hp': '',
         'jenis_kelamin': '',
         'tanggal_lahir': '',
       };
+
+      // 🔥 SUNTIKKAN BARIS INI: Agar nama langsung berubah tanpa perlu nunggu restart aplikasinya!
+      if (Get.isRegistered<HomeController>()) {
+        Get.find<HomeController>().updateNamaUser();
+      }
 
       Get.offAllNamed(
         Routes.DASHBOARD,

@@ -20,7 +20,6 @@ class HomeView extends GetView<HomeController> {
     return Scaffold(
       backgroundColor: bgLight,
       body: SafeArea(
-        // 🛠️ FASE 4: NotificationListener DIHAPUS karena deteksi scroll sudah ditangani Native Kotlin
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.all(24.0),
@@ -43,13 +42,6 @@ class HomeView extends GetView<HomeController> {
 
               // ── Card monitoring ──
               _buildActivityMonitoringStatus(),
-              _buildSmartNotifToggle(),
-              _buildToggle(
-                'Health Insight',
-                'Analisis dampak kesehatan',
-                controller.isHealthInsightActive,
-                controller.toggleHealthInsight,
-              ),
               _buildEyeMonitorToggle(),
             ],
           ),
@@ -307,7 +299,6 @@ class HomeView extends GetView<HomeController> {
   // ─────────────────────────────────────────────
   Widget _buildHealthScoreCard() {
     return Obx(() {
-      // 🛠️ Mengubah sistem pewarnaan dinamis berdasarkan 3 status riil dari Kotlin
       final String status = controller.doomscrollStatus.value;
       Color statusColor = accentCyan;
       String statusText = 'Status: Baik';
@@ -339,7 +330,6 @@ class HomeView extends GetView<HomeController> {
                   fontSize: 16,
                   fontWeight: FontWeight.w600)),
           const SizedBox(height: 16),
-          // Pembersihan Obx redundan di dalam Text (karena induknya sudah Obx)
           Text('${controller.healthScore.value}/100',
               style: const TextStyle(
                   fontSize: 48,
@@ -374,7 +364,7 @@ class HomeView extends GetView<HomeController> {
                   title: 'Kondisi Mata',
                   iconColor: controller.eyeCondition.value == 'Lelah'
                       ? dangerRed
-                      : textGrey),
+                      : accentCyan),
             ],
           )
         ]),
@@ -394,12 +384,12 @@ class HomeView extends GetView<HomeController> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Obx(() => Text(
-                  'Halo, ${controller.namaUser.value} 👋',
-                  style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: textDark),
-                )),
+              'Halo, ${controller.namaUser.value} 👋',
+              style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: textDark),
+            )),
             const Text('Siap mengelola waktumu hari ini?',
                 style: TextStyle(color: textGrey, fontSize: 12)),
           ],
@@ -514,180 +504,86 @@ class HomeView extends GetView<HomeController> {
     });
   }
 
-  Widget _buildSmartNotifToggle() {
-    return Obx(() => Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          decoration: BoxDecoration(
-              color: cardLight,
-              borderRadius: BorderRadius.circular(15),
-              boxShadow: [
-                BoxShadow(
-                    color: Colors.black.withOpacity(0.03),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4))
-              ],
-              border: Border.all(
-                  color: controller.isSmartNotifActive.value
-                      ? accentCyan
-                      : Colors.transparent,
-                  width: 1)),
-          child: Column(
-            children: [
-              ListTile(
-                title: const Text('Notifikasi Cerdas',
-                    style: TextStyle(
-                        color: textDark, fontWeight: FontWeight.bold)),
-                subtitle: const Text('Peringatan AI real-time',
-                    style: TextStyle(color: textGrey, fontSize: 12)),
-                trailing: Switch(
-                    value: controller.isSmartNotifActive.value,
-                    activeColor: accentCyan,
-                    onChanged: (value) {
-                      controller.onUserInteract();
-                      controller.toggleSmartNotif(value);
-                    }),
-              ),
-              if (controller.isSmartNotifActive.value)
-                Padding(
-                  padding:
-                      const EdgeInsets.only(left: 16, right: 16, bottom: 16),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                        color: accentCyan.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(10)),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.notifications_active_outlined,
-                            color: accentCyan, size: 16),
-                        const SizedBox(width: 8),
-                        Expanded(
-                            child: Text(
-                                'Status: ${controller.statusSmartNotif.value}',
-                                style: const TextStyle(
-                                    color: accentCyan,
-                                    fontSize: 12,
-                                    fontStyle: FontStyle.italic))),
-                      ],
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ));
-  }
-
   Widget _buildEyeMonitorToggle() {
-    return Obx(() => Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          decoration: BoxDecoration(
-              color: cardLight,
-              borderRadius: BorderRadius.circular(15),
-              boxShadow: [
-                BoxShadow(
-                    color: Colors.black.withOpacity(0.03),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4))
-              ],
-              border: Border.all(
-                  color: controller.isEyeMonitorActive.value
-                      ? accentCyan
-                      : Colors.transparent,
-                  width: 1)),
-          child: Column(
-            children: [
-              ListTile(
-                onTap: () {
-                  controller.onUserInteract();
-                  Get.toNamed(Routes.EYE_MONITORING);
-                },
-                title: const Text('Eye Monitoring',
-                    style: TextStyle(
-                        color: textDark, fontWeight: FontWeight.bold)),
-                subtitle: const Text('Mode Otomatis (Klik u/ Kalibrasi)',
-                    style: TextStyle(color: textGrey, fontSize: 12)),
-                trailing: Switch(
-                    value: controller.isEyeMonitorActive.value,
-                    activeColor: accentCyan,
-                    onChanged: (value) {
-                      controller.onUserInteract();
-                      controller.toggleEyeMonitor(value);
-                    }),
-              ),
-              if (controller.isEyeMonitorActive.value)
-                Padding(
-                  padding:
-                      const EdgeInsets.only(left: 16, right: 16, bottom: 16),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                        color: controller.statusLooping.value
-                                .contains('Menganalisis')
-                            ? dangerRed.withOpacity(0.1)
-                            : accentCyan.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(10)),
-                    child: Row(
-                      children: [
-                        Icon(
-                            controller.statusLooping.value
-                                    .contains('Menganalisis')
-                                ? Icons.camera_front
-                                : Icons.timer,
-                            color: controller.statusLooping.value
-                                    .contains('Menganalisis')
-                                ? dangerRed
-                                : accentCyan,
-                            size: 16),
-                        const SizedBox(width: 8),
-                        Expanded(
-                            child: Text(
-                                'Status: ${controller.statusLooping.value}',
-                                style: TextStyle(
-                                    color: controller.statusLooping.value
-                                            .contains('Menganalisis')
-                                        ? dangerRed
-                                        : accentCyan,
-                                    fontSize: 12,
-                                    fontStyle: FontStyle.italic))),
-                      ],
-                    ),
+    return Obx(() {
+      final bool isDetecting = controller.statusLooping.value.contains('mendeteksi');
+
+      return Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+            color: cardLight,
+            borderRadius: BorderRadius.circular(15),
+            boxShadow: [
+              BoxShadow(
+                  color: Colors.black.withOpacity(0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4))
+            ],
+            border: Border.all(
+                color: controller.isEyeMonitorActive.value
+                    ? accentCyan
+                    : Colors.transparent,
+                width: 1)),
+        child: Column(
+          children: [
+            ListTile(
+              onTap: () {
+                controller.onUserInteract();
+                Get.toNamed(Routes.EYE_MONITORING);
+              },
+              title: const Text('Eye Monitoring',
+                  style: TextStyle(
+                      color: textDark, fontWeight: FontWeight.bold)),
+              subtitle: const Text('Mode Otomatis (Klik u/ Kalibrasi)',
+                  style: TextStyle(color: textGrey, fontSize: 12)),
+              trailing: Switch(
+                  value: controller.isEyeMonitorActive.value,
+                  activeColor: accentCyan,
+                  onChanged: (value) {
+                    controller.onUserInteract();
+                    controller.toggleEyeMonitor(value);
+                  }),
+            ),
+            if (controller.isEyeMonitorActive.value)
+              Padding(
+                padding:
+                    const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                      color: isDetecting
+                          ? dangerRed.withOpacity(0.1)
+                          : accentCyan.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(10)),
+                  child: Row(
+                    children: [
+                      Icon(
+                          isDetecting
+                              ? Icons.camera_front
+                              : Icons.timer,
+                          color: isDetecting
+                              ? dangerRed
+                              : accentCyan,
+                          size: 16),
+                      const SizedBox(width: 8),
+                      Expanded(
+                          child: Text(
+                              'Status: ${controller.statusLooping.value}',
+                              style: TextStyle(
+                                  color: isDetecting
+                                      ? dangerRed
+                                      : accentCyan,
+                                  fontSize: 12,
+                                  fontStyle: FontStyle.italic))),
+                    ],
                   ),
                 ),
-            ],
-          ),
-        ));
-  }
-
-  Widget _buildToggle(String title, String subtitle, RxBool rxValue,
-      Function(bool) onChanged) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-          color: cardLight,
-          borderRadius: BorderRadius.circular(15),
-          boxShadow: [
-            BoxShadow(
-                color: Colors.black.withOpacity(0.03),
-                blurRadius: 10,
-                offset: const Offset(0, 4))
-          ]),
-      child: Obx(() => ListTile(
-            title: Text(title,
-                style: const TextStyle(
-                    color: textDark, fontWeight: FontWeight.bold)),
-            subtitle: Text(subtitle,
-                style: const TextStyle(color: textGrey, fontSize: 12)),
-            trailing: Switch(
-                value: rxValue.value,
-                activeColor: accentCyan,
-                onChanged: (value) {
-                  controller.onUserInteract();
-                  onChanged(value);
-                }),
-          )),
-    );
+              ),
+          ],
+        ),
+      );
+    });
   }
 }
 

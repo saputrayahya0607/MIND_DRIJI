@@ -14,6 +14,7 @@ abstract class Routes {
   static const NOTIFICATION = _Paths.NOTIFICATION;
   static const APP_BLOCK_SETTING = _Paths.APP_BLOCK_SETTING;
   static const PROFILE_DETAIL = _Paths.PROFILE_DETAIL;
+  static const ARTICLE_DETAIL = _Paths.ARTICLE_DETAIL;
 }
 
 abstract class _Paths {
@@ -30,4 +31,5 @@ abstract class _Paths {
   static const NOTIFICATION = '/notification';
   static const APP_BLOCK_SETTING = '/app-block-setting';
   static const PROFILE_DETAIL = '/profile-detail';
+  static const ARTICLE_DETAIL = '/article-detail';
 }

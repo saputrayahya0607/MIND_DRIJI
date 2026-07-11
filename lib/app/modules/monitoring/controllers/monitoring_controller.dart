@@ -6,23 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
-// ============================================================
-// v3 — FIX DUA BUG:
-//
-//  BUG 1 (bar aktif → 0m):
-//    SOT cache key sebelumnya pakai "startMs_nowMs" yang selalu berubah
-//    tiap detik → onBarTap miss cache → periodSot = 0 → semua app 0m.
-//    FIX: cache key pakai "startMs_period.endMs" (stabil), nilai SOT
-//    tetap dihitung sampai min(now, period.end).
-//
-//  BUG 2 (total Minggu ≠ Bulan):
-//    Tab Bulan pakai minggu kalender (tgl 1–7, 8–14 dst) yang tidak
-//    aligned dengan ISO weekday tab Minggu.
-//    FIX: Tab Bulan hitung seninMinggu1 = Senin pertama di/setelah
-//    tgl 1 bulan ini, lalu Mng1..Mng4 = blok 7 hari ISO dari situ.
-//    Dengan ini Mng2 di tab Bulan = PERSIS range yg disum tab Minggu.
-// ============================================================
-
 class MonitoringController extends GetxController {
   // ── Observable state ────────────────────────────────────────
   var selectedFilter   = 'Minggu'.obs;
@@ -50,7 +33,7 @@ class MonitoringController extends GetxController {
   final Map<String, double>                      _sotCache       = {};
 
   static const _platformMethod = MethodChannel('minddriji/apps');
-  static const String baseUrl = 'http://10.33.253.128:5000';
+  static const String baseUrl = 'https://yarn-uncurled-arguable.ngrok-free.dev';
 
   DateTime? _lastUploadTime;
   final int _uploadCooldownMinutes = 15; // Jeda 15 menit antar upload

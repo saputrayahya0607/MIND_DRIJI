@@ -24,12 +24,19 @@ class DoomscrollAccessibilityService : AccessibilityService() {
     private var countdownTimer: CountDownTimer? = null
     private val handler = Handler(Looper.getMainLooper())
     private val commitSwipeRunnable = Runnable { commitOneSwipe() }
+    
+    // ── AUTOMATED INACTIVITY RESET RUNNABLE ──
+    private val inactivityRunnable = Runnable {
+        Log.w("MIND_DRIJI", "⏳ Sesi otomatis di-reset karena tidak ada aktivitas swipe selama 5 menit.")
+        resetSession()
+    }
 
     // Overlay Doomscrolling (Pilihan Durasi)
     private var overlayView: View? = null
     private var windowManager: WindowManager? = null
 
     // Scroll state
+    private var lastScrollX: Int = Int.MIN_VALUE
     private var lastScrollY: Int = Int.MIN_VALUE  // MIN_VALUE = belum ada data sama sekali
     private var swipeDirection: Int = 0
     private var consecutiveDownCount: Int = 0
@@ -50,7 +57,7 @@ class DoomscrollAccessibilityService : AccessibilityService() {
             "com.snapchat.android"
         )
         var liveStatus: String = "Rendah"
-        var doomscrollScore: Int = 95
+        var doomscrollScore: Int = 0 
         private const val EMA_THRESHOLD_MS       = 600.0
         private const val SESSION_RESET_MS       = 3_000L
         private const val TRIGGER_COOLDOWN_MS    = 30_000L
@@ -58,6 +65,9 @@ class DoomscrollAccessibilityService : AccessibilityService() {
         private const val MIN_SWIPES_FOR_TRIGGER = 6
         private const val FINGER_UP_DEBOUNCE_MS  = 200L
         private const val MIN_SCROLL_DELTA       = 5
+        
+        // ⏱️ Batas toleransi inaktivitas (5 Menit) sebelum skor kembali bersih
+        private const val INACTIVITY_TIMEOUT_MS  = 300_000L
     }
 
     override fun onServiceConnected() {
@@ -103,6 +113,11 @@ class DoomscrollAccessibilityService : AccessibilityService() {
 
         // ── Deteksi arah scroll ──
         val scrolledDown = detectScrollDirection(event)
+
+        // Jika null (horizontal / tidak valid), langsung TOLAK dan keluar!
+        if (scrolledDown == null) {
+            return
+        }
 
         // Scroll ke atas → reset counter arah, jangan commit
         if (scrolledDown == false) {
@@ -159,7 +174,7 @@ class DoomscrollAccessibilityService : AccessibilityService() {
         val now = System.currentTimeMillis()
 
         if (lastSwipeTime > 0 && now - lastSwipeTime > SESSION_RESET_MS) {
-            Log.d("MIND_DRIJI", "Reset sesi: jeda ${now - lastSwipeTime}ms")
+            Log.d("MIND_DRIJI", "Reset sesi lama: jeda ${now - lastSwipeTime}ms")
             resetSession()
         }
 
@@ -179,16 +194,19 @@ class DoomscrollAccessibilityService : AccessibilityService() {
         lastSwipeTime  = now
         swipeDirection = 0
 
+        // 🔥 Hitung & update doomscrollScore secara real-time di sini
+        updateDoomscrollScore()
+
         Log.d("MIND_DRIJI", buildString {
             append("SWIPE #$swipeCount selesai")
             append(" | interval=${intervalMs.toInt()}ms")
             append(" | EMA=${emaVelocityMs.toInt()}ms")
             append(" | down=$consecutiveDownCount")
-            append(" | threshold=$EMA_THRESHOLD_MS")
+            append(" | Skor Saat Ini=$doomscrollScore ($liveStatus)")
         })
 
         // ── Cek trigger doomscrolling ──
-        val cukupSwipe  = swipeCount >= MIN_SWIPES_FOR_TRIGGER
+        val cukupSwipe   = swipeCount >= MIN_SWIPES_FOR_TRIGGER
         val terlalucepat = emaVelocityMs in 1.0..EMA_THRESHOLD_MS
         val konsistenBawah = consecutiveDownCount >= 4
 
@@ -197,8 +215,48 @@ class DoomscrollAccessibilityService : AccessibilityService() {
         if (cukupSwipe && terlalucepat && konsistenBawah) {
             Log.w("MIND_DRIJI", "🚨 DOOMSCROLLING TERDETEKSI! Menampilkan overlay...")
             lastTriggerTime = now
-            resetSession()
+            
+            // 🛑 MODIFIKASI: resetSession() DIHAPUS dari sini agar skor bertengger tinggi 
+            // dan sempat dibaca oleh MethodChannel milik Flutter Home dashboard.
+            
             showOverlay()
+        }
+
+        // 🔄 REFRESH TIMER INAKTIVITAS:
+        // Setiap kali sukses mendaftarkan swipe baru, hapus antrean inaktif lama dan jadwalkan ulang ke 5 menit ke depan.
+        handler.removeCallbacks(inactivityRunnable)
+        handler.postDelayed(inactivityRunnable, INACTIVITY_TIMEOUT_MS)
+    }
+
+    /**
+     * Fungsi baru kalkulasi scoring dinamis (Skala 0 - 100)
+     */
+    private fun updateDoomscrollScore() {
+        // 1. SKOR KECEPATAN (Bobot: 40%)
+        val speedScore = if (emaVelocityMs <= 0.0) 0.0 else {
+            val clampedVelocity = emaVelocityMs.coerceIn(300.0, 1500.0)
+            ((1500.0 - clampedVelocity) / (1500.0 - 300.0)) * 100.0
+        }
+
+        // 2. SKOR VOLUME (Bobot: 40%)
+        val maxSwipeCap = 25.0
+        val volumeScore = (swipeCount.toDouble() / maxSwipeCap).coerceIn(0.0, 1.0) * 100.0
+
+        // 3. SKOR KONSISTENSI DI REKAMAN KE BAWAH (Bobot: 20%)
+        val maxConsecutiveCap = 10.0
+        val consistencyScore = (consecutiveDownCount.toDouble() / maxConsecutiveCap).coerceIn(0.0, 1.0) * 100.0
+
+        // 4. TOTAL AKUMULASI BOBOT NILAI
+        val finalScore = (speedScore * 0.4) + (volumeScore * 0.4) + (consistencyScore * 0.2)
+
+        // Masukkan hasil kalkulasi ke companion object variable
+        doomscrollScore = finalScore.toInt().coerceIn(0, 100)
+
+        // Tentukan label status live
+        liveStatus = when {
+            doomscrollScore < 35 -> "Rendah"
+            doomscrollScore < 75 -> "Sedang"
+            else -> "Tinggi"
         }
     }
 
@@ -270,7 +328,6 @@ class DoomscrollAccessibilityService : AccessibilityService() {
         if (blockOverlayView != null) return
         if (!Settings.canDrawOverlays(this)) return
 
-        // Ambil sisa waktu spesifik untuk paket aplikasi ini, bukan global lagi
         val remaining = BlockPreferenceManager.remainingMsForPackage(this, blockedPkg)
         if (remaining <= 0L) return
 
@@ -288,10 +345,8 @@ class DoomscrollAccessibilityService : AccessibilityService() {
 
         val view = LayoutInflater.from(this).inflate(R.layout.overlay_block_countdown, null)
 
-        // Mulai jalankan countdown waktu mundur khusus paket ini
         startCountdownTimer(view, remaining, blockedPkg)
 
-        // Tombol Kembali ke MindDriji berjalan lewat sistem MainActivity utama kamu
         view.findViewById<Button>(R.id.btn_open_minddriji).setOnClickListener {
             dismissBlockOverlay()
             openMindDriji(fromBlock = true)
@@ -310,7 +365,6 @@ class DoomscrollAccessibilityService : AccessibilityService() {
         val tvCountdown = view.findViewById<TextView>(R.id.tv_countdown)
         val tvAppName   = view.findViewById<TextView>(R.id.tv_blocked_app)
 
-        // Mendapatkan nama aplikasi asli yang akurat sesuai target paket yang diblokir
         tvAppName.text = try {
             val info = packageManager.getApplicationInfo(blockedPkg, 0)
             packageManager.getApplicationLabel(info).toString()
@@ -330,7 +384,6 @@ class DoomscrollAccessibilityService : AccessibilityService() {
                 }
             }
             override fun onFinish() {
-                // 🔥 HAPUS BLOKIR HANYA UNTUK APLIKASI INI SAJA! Aplikasi lain tetap aman terkunci
                 BlockPreferenceManager.clearBlockForPackage(this@DoomscrollAccessibilityService, blockedPkg)
                 dismissBlockOverlay()
                 Log.i("MIND_DRIJI", "Blokiran aplikasi $blockedPkg selesai otomatis")
@@ -374,12 +427,17 @@ class DoomscrollAccessibilityService : AccessibilityService() {
 
     private fun resetSession() {
         handler.removeCallbacks(commitSwipeRunnable)
+        handler.removeCallbacks(inactivityRunnable) // Amankan antrean agar tidak tumpang tindih
         emaVelocityMs        = 0.0
         lastSwipeTime        = 0L
         swipeCount           = 0
         lastScrollY          = Int.MIN_VALUE
         swipeDirection       = 0
         consecutiveDownCount = 0
+        
+        // 🔥 Reset skor dan status kembali ke awal saat sesi berakhir (Inaktif tercapai)
+        doomscrollScore      = 0
+        liveStatus           = "Rendah"
     }
 
     override fun onInterrupt() = resetSession()
