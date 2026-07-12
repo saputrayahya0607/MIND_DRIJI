@@ -185,6 +185,28 @@ class LoginController extends GetxController {
 
       final user = supabase.auth.currentUser;
 
+      if (user != null) {
+        // 🌟 PENTING: Pastikan row profile ada di tabel 'profiles'
+        final existing = await supabase
+            .from('profiles')
+            .select()
+            .eq('id', user.id)
+            .maybeSingle(); // pakai maybeSingle, bukan single, biar gak error kalau belum ada
+
+        if (existing == null) {
+          // Baru pertama kali login via Google -> buat row baru
+          await supabase.from('profiles').upsert({
+            'id': user.id,
+            'email': user.email,
+            'nama_lengkap': user.userMetadata?['full_name'] ?? '',
+            'no_hp': '',
+            'jenis_kelamin': '',
+            'tanggal_lahir': null,
+            'is_verified': true,
+          });
+        }
+      }
+
       HomeController.dataUserLogin = {
         'id': user?.id,
         'email': user?.email,

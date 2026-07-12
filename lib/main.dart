@@ -4,6 +4,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app/bindings/initial_binding.dart';
 import 'app/routes/app_pages.dart';
 import 'supabase_config.dart';
+import 'package:get_storage/get_storage.dart';
+import 'app/modules/notification/controllers/notification_controller.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -12,6 +14,10 @@ Future<void> main() async {
     url: SupabaseConfig.supabaseUrl,
     anonKey: SupabaseConfig.supabaseAnonKey,
   );
+
+  await GetStorage.init();
+
+  Get.put(NotificationController(), permanent: true);
 
   // 🟡 1. Cek apakah user sudah pernah login sebelumnya
   final session = Supabase.instance.client.auth.currentSession;

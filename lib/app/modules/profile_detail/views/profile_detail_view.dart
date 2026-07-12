@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:http/http.dart' as http; 
-import 'dart:convert';
 import '../../home/controllers/home_controller.dart'; 
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../profile/controllers/profile_controller.dart';
+import 'package:mind_driji/app/modules/notification/controllers/notification_controller.dart';
 
 const Color bgLight = Color(0xFFF5F7FA);
 const Color cardLight = Color(0xFFFFFFFF);
@@ -123,77 +123,76 @@ class _ProfileDetailViewState extends State<ProfileDetailView> {
   }
 
   Future<void> _simpanPerubahan() async {
-    setState(() {
-      isLoading = true;
-    });
+  setState(() {
+    isLoading = true;
+  });
+
+  try {
+    final user = Supabase.instance.client.auth.currentUser;
+
+    if (user == null) {
+      throw Exception('User tidak ditemukan');
+    }
+
+    await Supabase.instance.client.from('profiles').update({
+      'nama_lengkap': namaController.text.trim(),
+      'no_hp': noHpController.text.trim(),
+      'jenis_kelamin': jenisKelamin,
+      'tanggal_lahir': tanggalLahir.toIso8601String().split('T').first,
+    }).eq('id', user.id);
+
+    final String namaBaru = namaController.text.trim();
+
+    if (HomeController.dataUserLogin != null) {
+      HomeController.dataUserLogin!['nama_lengkap'] = namaBaru;
+      HomeController.dataUserLogin!['no_hp'] = noHpController.text.trim();
+      HomeController.dataUserLogin!['jenis_kelamin'] = jenisKelamin;
+      HomeController.dataUserLogin!['tanggal_lahir'] =
+          tanggalLahir.toIso8601String().split('T').first;
+    }
+
+    // 🌟 TAMBAHKAN INI — sinkronkan ke controller lain yang aktif
+    if (Get.isRegistered<HomeController>()) {
+      Get.find<HomeController>().namaUser.value = namaBaru;
+    }
+
+    if (Get.isRegistered<ProfileController>()) {
+      Get.find<ProfileController>().loadUser();
+    }
 
     try {
-      final user =
-          Supabase.instance.client.auth.currentUser;
-
-      if (user == null) {
-        throw Exception('User tidak ditemukan');
+      if (Get.isRegistered<NotificationController>()) {
+        Get.find<NotificationController>().addLog(
+          'Profil Diperbarui 👤',
+          'Informasi detail profil Anda berhasil diperbarui.',
+          'profile',
+        );
       }
-
-      await Supabase.instance.client
-          .from('profiles')
-          .update({
-            'nama_lengkap':
-                namaController.text.trim(),
-            'no_hp':
-                noHpController.text.trim(),
-            'jenis_kelamin':
-                jenisKelamin,
-            'tanggal_lahir':
-                tanggalLahir
-                    .toIso8601String()
-                    .split('T')
-                    .first,
-          })
-          .eq('id', user.id);
-
-      if (HomeController.dataUserLogin != null) {
-        HomeController.dataUserLogin![
-            'nama_lengkap'] =
-            namaController.text.trim();
-
-        HomeController.dataUserLogin![
-            'no_hp'] =
-            noHpController.text.trim();
-
-        HomeController.dataUserLogin![
-            'jenis_kelamin'] =
-            jenisKelamin;
-
-        HomeController.dataUserLogin![
-            'tanggal_lahir'] =
-            tanggalLahir
-                .toIso8601String()
-                .split('T')
-                .first;
-      }
-
-      Get.back();
-
-      Get.snackbar(
-        'Berhasil',
-        'Profil berhasil diperbarui',
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-      );
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        e.toString(),
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
+      print("⚠️ Gagal nge-log notifikasi: $e");
     }
+
+    Get.back();
+
+    Get.snackbar(
+      'Berhasil',
+      'Profil berhasil diperbarui',
+      backgroundColor: Colors.green,
+      colorText: Colors.white,
+    );
+  } catch (e) {
+    Get.snackbar(
+      'Error',
+      e.toString(),
+      backgroundColor: Colors.red,
+      colorText: Colors.white,
+    );
+  } finally {
+    setState(() {
+      isLoading = false;
+    });
   }
+}
 
   @override
   Widget build(BuildContext context) {

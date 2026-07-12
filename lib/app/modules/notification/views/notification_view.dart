@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/notification_controller.dart';
+import 'package:mind_driji/app/data/models/log_model.dart';
 
 // PALET WARNA LIGHT MODE
 const Color bgLight = Color(0xFFF5F7FA);
@@ -25,69 +26,84 @@ class NotificationView extends GetView<NotificationController> {
           icon: const Icon(Icons.arrow_back_ios_new, color: textDark),
           onPressed: () => Get.back(),
         ),
-        title: const Text('Notifikasi AI', style: TextStyle(color: textDark, fontWeight: FontWeight.bold)),
+        title: const Text('Log Aktivitas AI', style: TextStyle(color: textDark, fontWeight: FontWeight.bold)),
         centerTitle: true,
         actions: [
+          // MENGGUNAKAN CLEAR LOGS UNTUK MEMBERSIHKAN RIWAYAT
           IconButton(
-            icon: const Icon(Icons.done_all, color: accentCyan),
+            icon: const Icon(Icons.delete_sweep_outlined, color: dangerRed),
             onPressed: () {
-              Get.snackbar('Berhasil', 'Semua notifikasi ditandai sudah dibaca', 
-                backgroundColor: textDark, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
+              if (controller.logList.isNotEmpty) {
+                controller.clearLogs();
+                Get.snackbar('Berhasil', 'Semua log aktivitas telah dihapus', 
+                  backgroundColor: textDark, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM);
+              }
             },
           )
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(24.0),
-        children: [
-          const Text('Hari Ini', style: TextStyle(color: textGrey, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 16),
-          
-          _buildNotifCard(
-            icon: Icons.remove_red_eye, 
-            iconColor: dangerRed, 
-            title: 'Peringatan Kelelahan Mata!', 
-            time: '10 menit yang lalu', 
-            desc: 'Blink rate Anda turun drastis ke 12 BPM. Segera istirahatkan mata Anda dengan aturan 20-20-20.',
-            isUnread: true,
-          ),
-          
-          _buildNotifCard(
-            icon: Icons.warning_amber_rounded, 
-            iconColor: warningYellow, 
-            title: 'Indikasi Doomscrolling', 
-            time: '1 jam yang lalu', 
-            desc: 'Anda telah membuka TikTok selama 45 menit tanpa jeda. Mari istirahat sejenak.',
-            isUnread: true,
-          ),
+      // MENGGUNAKAN OBX DENGAN KONDISI EMPTY STATE YANG RAPI
+      body: Obx(() {
+        if (controller.logList.isEmpty) {
+          return const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.history_toggle_off_rounded, size: 64, color: textGrey),
+                SizedBox(height: 16),
+                Text(
+                  'Belum ada log aktivitas tercatat',
+                  style: TextStyle(color: textGrey, fontWeight: FontWeight.w500),
+                ),
+              ],
+            ),
+          );
+        }
 
-          _buildNotifCard(
-            icon: Icons.health_and_safety, 
-            iconColor: accentCyan, 
-            title: 'Laporan Harian Tersedia', 
-            time: '08:00 AM', 
-            desc: 'Skor kesehatan digital Anda hari ini sudah diperbarui. Cek tab Insight sekarang.',
-            isUnread: false,
-          ),
-
-          const SizedBox(height: 24),
-          const Text('Kemarin', style: TextStyle(color: textGrey, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 16),
-
-          _buildNotifCard(
-            icon: Icons.timer_off_outlined, 
-            iconColor: warningYellow, 
-            title: 'Batas Screen Time Tercapai', 
-            time: 'Kemarin, 21:30', 
-            desc: 'Anda telah melewati batas penggunaan layar 4 jam. Mode fokus otomatis diaktifkan.',
-            isUnread: false,
-          ),
-        ],
-      ),
+        return ListView.builder(
+          padding: const EdgeInsets.all(24.0),
+          itemCount: controller.logList.length,
+          itemBuilder: (context, index) {
+            final log = controller.logList[index];
+            return _buildNotifCard(log);
+          },
+        );
+      }),
     );
   }
 
-  Widget _buildNotifCard({required IconData icon, required Color iconColor, required String title, required String time, required String desc, required bool isUnread}) {
+  // WIDGET CARD YANG OTOMATIS MENENTUKAN IKON & WARNA BERDASARKAN TIPE LOG
+  Widget _buildNotifCard(ActivityLog log) {
+    IconData icon;
+    Color iconColor;
+
+    // Memetakan tipe log string ke komponen UI Visual secara dinamis
+    switch (log.type) {
+      case 'eye':
+        icon = Icons.remove_red_eye;
+        iconColor = dangerRed;
+        break;
+      case 'doomscroll':
+        icon = Icons.warning_amber_rounded;
+        iconColor = warningYellow;
+        break;
+      case 'sot':
+        icon = Icons.timer_off_outlined;
+        iconColor = accentCyan;
+        break;
+      case 'profile':
+        icon = Icons.person_outline_rounded;
+        iconColor = Colors.blue;
+        break;
+      case 'password':
+        icon = Icons.lock_outline_rounded;
+        iconColor = Colors.purple;
+        break;
+      default:
+        icon = Icons.info_outline;
+        iconColor = textGrey;
+    }
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
@@ -95,7 +111,7 @@ class NotificationView extends GetView<NotificationController> {
         color: cardLight, 
         borderRadius: BorderRadius.circular(15),
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
-        border: Border.all(color: isUnread ? iconColor.withOpacity(0.5) : Colors.transparent, width: 1)
+        border: Border.all(color: iconColor.withOpacity(0.15), width: 1)
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -113,19 +129,26 @@ class NotificationView extends GetView<NotificationController> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Expanded(child: Text(title, style: const TextStyle(color: textDark, fontWeight: FontWeight.bold))),
-                    Text(time, style: const TextStyle(color: textGrey, fontSize: 10)),
+                    Expanded(
+                      child: Text(
+                        log.title, 
+                        style: const TextStyle(color: textDark, fontWeight: FontWeight.bold)
+                      )
+                    ),
+                    Text(
+                      log.timestamp, 
+                      style: const TextStyle(color: textGrey, fontSize: 10)
+                    ),
                   ],
                 ),
                 const SizedBox(height: 8),
-                Text(desc, style: const TextStyle(color: textGrey, fontSize: 12, height: 1.5)),
+                Text(
+                  log.desc, 
+                  style: const TextStyle(color: textGrey, fontSize: 12, height: 1.5)
+                ),
               ],
             ),
           ),
-          if (isUnread) ...[
-            const SizedBox(width: 8),
-            Container(width: 8, height: 8, decoration: const BoxDecoration(color: accentCyan, shape: BoxShape.circle, boxShadow: [BoxShadow(color: accentCyan, blurRadius: 5)])),
-          ]
         ],
       ),
     );

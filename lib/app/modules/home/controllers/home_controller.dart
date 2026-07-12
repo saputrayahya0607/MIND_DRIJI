@@ -5,9 +5,11 @@ import 'package:get/get.dart';
 import 'package:usage_stats/usage_stats.dart';
 import 'dart:async';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 // PASTIKAN: Sesuaikan path import ini dengan nama package dan folder proyekmu
 import 'package:mind_driji/app/modules/monitoring/controllers/monitoring_controller.dart'; 
+import 'package:mind_driji/app/modules/notification/controllers/notification_controller.dart';
 
 class HomeController extends GetxController with WidgetsBindingObserver {
 
@@ -76,6 +78,8 @@ class HomeController extends GetxController with WidgetsBindingObserver {
   void onInit() {
     super.onInit();
     WidgetsBinding.instance.addObserver(this);
+
+    _restoreUserProfileIfNeeded();
 
     if (dataUserLogin != null && dataUserLogin!['nama_lengkap'] != null) {
       namaUser.value = dataUserLogin!['nama_lengkap'];
@@ -217,6 +221,33 @@ class HomeController extends GetxController with WidgetsBindingObserver {
     }
   }
 
+  // 🌟 FUNGSI BARU
+  Future<void> _restoreUserProfileIfNeeded() async {
+    if (dataUserLogin != null) return; // udah ada, gak perlu fetch ulang
+
+    try {
+      final supabase = Supabase.instance.client;
+      final user = supabase.auth.currentUser;
+      if (user == null) return;
+
+      final profile = await supabase
+          .from('profiles')
+          .select()
+          .eq('id', user.id)
+          .maybeSingle();
+
+      if (profile != null) {
+        dataUserLogin = profile;
+        if (profile['nama_lengkap'] != null) {
+          namaUser.value = profile['nama_lengkap'];
+        }
+        print("✅ dataUserLogin dipulihkan setelah restart: $profile");
+      }
+    } catch (e) {
+      print("❌ Gagal memulihkan dataUserLogin: $e");
+    }
+  }
+
   void updateNamaUser() {
     if (dataUserLogin != null && dataUserLogin!['nama_lengkap'] != null) {
       namaUser.value = dataUserLogin!['nama_lengkap'].toString();
@@ -243,15 +274,40 @@ class HomeController extends GetxController with WidgetsBindingObserver {
   Future<void> _updateLiveDoomscrollDataOnce() async {
     if (hasAccessibilityPermission.value) {
       try {
-        // Mengetuk pintu native Android Kotlin untuk meminta data terbaru
         final Map<dynamic, dynamic>? liveData = 
             await _platformChannel.invokeMethod('getLiveDoomscrollData');
 
         if (liveData != null) {
+          // 1. Simpan status sebelum di-update
+          String statusLama = doomscrollStatus.value; 
+
+          // 2. Update nilai baru dari AI
           doomscrollStatus.value = liveData['status'] ?? 'Rendah';
           doomscrollScore.value = liveData['score'] ?? 0;
 
-          // Hitung ulang skor kesehatan digital setiap kali ada perubahan data doomscrolling
+          // 3. Logika Log Pintar (Hanya mencatat jika ada PERUBAHAN STATUS agar tidak spam)
+          if (statusLama != doomscrollStatus.value) {
+            
+            // KONDISI A: Saat mulai terdeteksi doomscrolling (Status naik ke 'Sedang')
+            if (doomscrollStatus.value == 'Sedang') {
+              Get.find<NotificationController>().addLog(
+                'Doomscrolling Terdeteksi 📱',
+                'AI melihat Anda mulai asyik scrolling. Yuk, kendalikan Scrollingmu dari sekarang!',
+                'doomscroll' // Ikon & warna otomatis menyesuaikan di View
+              );
+            }
+            
+            // KONDISI B: Saat indikator sudah mencapai tingkat bahaya (Status naik ke 'Tinggi')
+            else if (doomscrollStatus.value == 'Tinggi') {
+              Get.find<NotificationController>().addLog(
+                'Kritis: Doomscrolling Tinggi! 🚨',
+                'Anda sudah tenggelam terlalu lama dalam scrolling. Sangat disarankan untuk segera menutup aplikasi!',
+                'doomscroll'
+              );
+            }
+          }
+
+          // 4. Hitung ulang total skor kesehatan digital
           _hitungTotalDigitalHealthScore();
         }
       } catch (e) {
@@ -268,15 +324,31 @@ class HomeController extends GetxController with WidgetsBindingObserver {
       ever(monitoringCtrl.todayScreenTime, (String SOTTerbaru) {
         screenTime.value = SOTTerbaru;
 
-        // Ubah string "Xj Ym" menjadi total integer menit
         int totalMenit = _parseFormatTimeToMinutes(SOTTerbaru);
 
-        // Rumus Skor SOT Hari Ini: 
-        // Ideal maks 2 jam (120 menit). Lebih dari itu, kurangi 2 poin tiap 5 menit.
         int scoreSot = 100 - ((totalMenit > 120) ? ((totalMenit - 120) ~/ 5) * 2 : 0);
         screenTimeScore.value = scoreSot.clamp(10, 100);
 
-        // Hitung ulang total skor kesehatan digital dashboard
+        // ==========================================
+        // 🔥 TAMBAHKAN LOG SCREEN TIME DI SINI
+        // ==========================================
+        // Menyentuh tepat 2 Jam (120 menit)
+        if (totalMenit == 120) {
+          Get.find<NotificationController>().addLog(
+            'Batas Ideal Layar Tercapai',
+            'Penggunaan layar Anda hari ini sudah mencapai 2 jam. Kurangi konsumsi gadget ya.',
+            'sot'
+          );
+        } 
+        // Menyentuh tepat 4 Jam (240 menit)
+        else if (totalMenit == 240) {
+          Get.find<NotificationController>().addLog(
+            'Peringatan Screen Time! ⏱️',
+            'SOT Anda sudah menembus 4 jam hari ini! Sangat disarankan untuk melakukan aktivitas fisik.',
+            'sot'
+          );
+        }
+
         _hitungTotalDigitalHealthScore();
       });
     } catch (e) {
@@ -317,28 +389,29 @@ class HomeController extends GetxController with WidgetsBindingObserver {
   // EYE MONITORING SYSTEM (MEDIAPIPE STREAM INTEGRATION)
   // =========================
 
+  // CARI FUNGSI INI DI HOME CONTROLLER
   void _initEyeStatusStreamListener() {
     _platformChannel.setMethodCallHandler((MethodCall call) async {
       if (call.method == "onEyeStatusUpdate") {
         String statusMasuk = call.arguments ?? "Normal";
-
         statusLooping.value = "Mengamati: $statusMasuk";
 
-        // Jangan proses jika status tidak berubah
         if (eyeCondition.value == statusMasuk) return;
-
         eyeCondition.value = statusMasuk;
 
-        // Jika AI mendeteksi mata lelah
         if (statusMasuk == "Lelah") {
-
-          // Tambahkan jumlah deteksi mata lelah
           eyeFatigueCount.value++;
-
-          eyeMonitoringScore.value =
-              (eyeMonitoringScore.value - 8).clamp(10, 100);
-
+          eyeMonitoringScore.value = (eyeMonitoringScore.value - 8).clamp(10, 100);
           _hitungTotalDigitalHealthScore();
+
+          // ==========================================
+          // 🔥 TAMBAHKAN LOG EYE MONITORING DI SINI
+          // ==========================================
+          Get.find<NotificationController>().addLog(
+            'Mata Terdeteksi Lelah! ⚠️',
+            'AI mendeteksi mata Anda mulai sayu/lelah. Istirahat sejenak, Boss!',
+            'eye' // type sesuai dengan switch case di View
+          );
 
           Get.snackbar(
             'Mata Terdeteksi Lelah! ⚠️',
@@ -349,13 +422,8 @@ class HomeController extends GetxController with WidgetsBindingObserver {
             duration: const Duration(seconds: 4),
           );
         }
-
-        // Jika mata kembali normal
         else if (statusMasuk == "Normal") {
-
-          eyeMonitoringScore.value =
-              (eyeMonitoringScore.value + 2).clamp(10, 100);
-
+          eyeMonitoringScore.value = (eyeMonitoringScore.value + 2).clamp(10, 100);
           _hitungTotalDigitalHealthScore();
         }
       }
