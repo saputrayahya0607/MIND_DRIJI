@@ -32,8 +32,8 @@ class MonitoringController extends GetxController {
   // VALUE: SOT menit aktual sampai min(now, period.end)
   final Map<String, double>                      _sotCache       = {};
 
-  static const _platformMethod = MethodChannel('minddriji/apps');
-  static const String baseUrl = 'https://yarn-uncurled-arguable.ngrok-free.dev';
+  static const _platformMethod = MethodChannel('minddiji/apps');
+  static const String baseUrl = 'https://minddrijiapp.my.id';
 
   DateTime? _lastUploadTime;
   final int _uploadCooldownMinutes = 15; // Jeda 15 menit antar upload

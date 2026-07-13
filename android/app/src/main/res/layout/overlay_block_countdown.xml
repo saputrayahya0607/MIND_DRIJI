@@ -53,9 +53,9 @@
         android:textSize="13sp"
         android:layout_marginBottom="48dp"/>
 
-    <!-- Tombol ke MindDriji -->
+    <!-- Tombol ke minddiji -->
     <Button
-        android:id="@+id/btn_open_minddriji"
+        android:id="@+id/btn_open_minddiji"
         android:layout_width="260dp"
         android:layout_height="52dp"
         android:text="Buka MIND DRIJI"

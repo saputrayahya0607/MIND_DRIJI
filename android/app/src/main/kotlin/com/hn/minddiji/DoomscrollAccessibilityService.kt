@@ -1,4 +1,4 @@
-package com.hn.minddriji
+package com.hn.minddiji
 
 import android.accessibilityservice.AccessibilityService
 import android.content.Context
@@ -347,9 +347,9 @@ class DoomscrollAccessibilityService : AccessibilityService() {
 
         startCountdownTimer(view, remaining, blockedPkg)
 
-        view.findViewById<Button>(R.id.btn_open_minddriji).setOnClickListener {
+        view.findViewById<Button>(R.id.btn_open_minddiji).setOnClickListener {
             dismissBlockOverlay()
-            openMindDriji(fromBlock = true)
+            openminddiji(fromBlock = true)
         }
 
         try {
@@ -401,9 +401,9 @@ class DoomscrollAccessibilityService : AccessibilityService() {
         }
     }
 
-    private fun openMindDriji(fromBlock: Boolean = false) {
+    private fun openminddiji(fromBlock: Boolean = false) {
         val intent = Intent().apply {
-            setClassName("com.hn.minddriji", "com.hn.minddriji.MainActivity")
+            setClassName("com.hn.minddiji", "com.hn.minddiji.MainActivity")
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
             putExtra("trigger_popup", !fromBlock)
             putExtra("from_block", fromBlock)
@@ -411,7 +411,7 @@ class DoomscrollAccessibilityService : AccessibilityService() {
         try { 
             startActivity(intent) 
         } catch (e: Exception) {
-            Log.e("MIND_DRIJI", "Gagal buka MindDriji: ${e.message}")
+            Log.e("MIND_DRIJI", "Gagal buka minddiji: ${e.message}")
         }
     }
 

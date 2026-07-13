@@ -1,4 +1,4 @@
-package com.hn.minddriji
+package com.hn.minddiji
 
 import android.app.Notification
 import android.app.NotificationChannel

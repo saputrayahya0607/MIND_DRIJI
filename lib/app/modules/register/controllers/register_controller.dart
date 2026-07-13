@@ -26,7 +26,7 @@ final supabase = Supabase.instance.client;
 
 // GANTI DENGAN IP FLASK KAMU
 final String baseUrl =
-"https://yarn-uncurled-arguable.ngrok-free.dev";
+"https://minddrijiapp.my.id";
 
 void togglePasswordView() {
 isPasswordHidden.value =

@@ -1,4 +1,4 @@
-package com.hn.minddriji
+package com.hn.minddiji
 
 import android.app.usage.UsageEvents
 import android.app.usage.UsageStatsManager
@@ -22,8 +22,8 @@ class MainActivity : FlutterActivity() {
         private const val REQUEST_OVERLAY_CODE = 1234
     }
 
-    private val CHANNEL_APPS = "minddriji/apps"
-    private val CHANNEL_INTENT = "minddriji/intent"
+    private val CHANNEL_APPS = "minddiji/apps"
+    private val CHANNEL_INTENT = "minddiji/intent"
     private var triggerPopup = false
     private var channelIntent: MethodChannel? = null
 

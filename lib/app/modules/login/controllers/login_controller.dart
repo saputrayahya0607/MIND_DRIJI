@@ -19,7 +19,7 @@ class LoginController extends GetxController {
   final supabase = Supabase.instance.client;
 
   final String baseUrl =
-      "https://yarn-uncurled-arguable.ngrok-free.dev";
+      "https://minddrijiapp.my.id";
 
   void togglePasswordView() {
     isPasswordHidden.value =

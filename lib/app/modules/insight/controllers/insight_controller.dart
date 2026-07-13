@@ -9,7 +9,7 @@ class InsightController extends GetxController {
 
   // ── 🟡 STATE MANAGEMENT LIVE ARTIKEL SCRAPPING (NGROK) ──
   // PENTING: Tambahkan path endpoint-mu di belakangnya (misal: /api/articles atau /api/insight/articles)
-  final String apiUrl = "https://yarn-uncurled-arguable.ngrok-free.dev/api/articles"; 
+  final String apiUrl = "https://minddrijiapp.my.id/api/articles"; 
   
   // Diubah jadi RxList<dynamic> agar tipenya fleksibel membaca Map dari MongoDB
   var articles = <dynamic>[].obs; 

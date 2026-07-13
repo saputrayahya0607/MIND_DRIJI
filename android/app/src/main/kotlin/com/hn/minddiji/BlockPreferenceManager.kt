@@ -1,11 +1,11 @@
-package com.hn.minddriji
+package com.hn.minddiji
 
 import android.content.Context
 import android.content.SharedPreferences
 
 object BlockPreferenceManager {
 
-    private const val PREF_NAME = "minddriji_block"
+    private const val PREF_NAME = "minddiji_block"
     private const val KEY_BLOCKED_DATA = "blocked_packages_individual" 
 
     private fun prefs(context: Context): SharedPreferences =

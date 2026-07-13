@@ -14,7 +14,7 @@ import 'package:mind_driji/app/modules/notification/controllers/notification_con
 class HomeController extends GetxController with WidgetsBindingObserver {
 
   // Method channel ke native Kotlin untuk cek permission & ambil data live
-  static const _platformChannel = MethodChannel('minddriji/intent');
+  static const _platformChannel = MethodChannel('minddiji/intent');
 
   // =========================
   // DATA USER

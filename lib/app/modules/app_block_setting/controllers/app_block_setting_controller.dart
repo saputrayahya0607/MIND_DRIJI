@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 
 class AppBlockSettingController extends GetxController with WidgetsBindingObserver {
   // Channel komunikasi ke Android Native
-  static const platform = MethodChannel('minddriji/intent');
+  static const platform = MethodChannel('minddiji/intent');
 
   // List reactive berisi aplikasi yang sedang diblokir
   var blockedApps = <Map<String, dynamic>>[].obs;
